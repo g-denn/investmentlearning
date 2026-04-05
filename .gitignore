@@ -1,0 +1,81 @@
+# Python
+venv/
+env/
+.env
+.venv
+.venv-api/
+.uv-cache/
+.uv-python/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Specific project directories
+ValueInvestorsClub/ValueInvestorsClub/__pycache__/
+ValueInvestorsClub/ValueInvestorsClub/spiders/__pycache__/
+ValueInvestorsClub/__pycache__
+
+# Database
+*.sqlite3
+*.db
+VIC_IDEAS.sql
+data/
+data/postgres/
+
+# Logs
+*.log
+logs/
+frontend/preview-err.log
+frontend/preview-out.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yfinance/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Jupyter Notebooks
+.ipynb_checkpoints
