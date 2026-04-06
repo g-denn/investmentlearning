@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useIdeaDetail, useIdeaPerformance } from '../hooks/useIdeas';
 import IdeaDetailPage from './IdeaDetailPage';
@@ -74,7 +74,7 @@ describe('IdeaDetailPage', () => {
     } as ReturnType<typeof useIdeaPerformance>);
   });
 
-  it('renders the VIC embed and extracted summary content', () => {
+  it('renders the extracted thesis, summary content, and performance controls', () => {
     mockUseIdeaDetail.mockReturnValue({
       data: baseIdea,
       isLoading: false,
@@ -84,28 +84,32 @@ describe('IdeaDetailPage', () => {
 
     renderPage();
 
-    expect(screen.getByText('Original VIC write-up')).toBeInTheDocument();
-    expect(screen.getByTitle(/Original write-up for/i)).toHaveAttribute('src', baseIdea.link);
+    expect(screen.getByText('Thesis')).toBeInTheDocument();
     expect(screen.getByText('Summary')).toBeInTheDocument();
+    expect(screen.getByText('What you can do here')).toBeInTheDocument();
     expect(screen.getByText('A structured VIC thesis.')).toBeInTheDocument();
     expect(screen.getByText('Catalyst one.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open original VIC page' })).toHaveAttribute('href', baseIdea.link);
+    expect(screen.getByRole('button', { name: 'View performance' })).toBeInTheDocument();
   });
 
-  it('removes the loading overlay once the iframe finishes loading', () => {
+  it('shows a fallback message when no performance data is available', () => {
     mockUseIdeaDetail.mockReturnValue({
       data: baseIdea,
       isLoading: false,
       isError: false,
       error: null,
     } as ReturnType<typeof useIdeaDetail>);
+    mockUseIdeaPerformance.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+      error: null,
+    } as ReturnType<typeof useIdeaPerformance>);
 
     renderPage();
 
-    expect(screen.getByText('Loading the original VIC layout...')).toBeInTheDocument();
-
-    fireEvent.load(screen.getByTitle(/Original write-up for/i));
-
-    expect(screen.queryByText('Loading the original VIC layout...')).not.toBeInTheDocument();
+    expect(screen.getByText('Performance data is not available for this idea yet.')).toBeInTheDocument();
   });
 
   it('shows the live performance loading state while market data is being fetched', () => {

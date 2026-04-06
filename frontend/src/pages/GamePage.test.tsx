@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import GamePage from './GamePage';
@@ -45,25 +45,6 @@ describe('Game flow', () => {
     jest.clearAllMocks();
     mockIdeasApi.getRandomIdea.mockResolvedValue(sampleIdea);
     mockIdeasApi.getIdeaById.mockResolvedValue(sampleIdea);
-    mockIdeasApi.getIdeaPerformance.mockResolvedValue(null);
-  });
-
-  it('only starts one initial thesis load in StrictMode', async () => {
-    render(
-      <React.StrictMode>
-        <MemoryRouter>
-          <GamePage />
-        </MemoryRouter>
-      </React.StrictMode>,
-    );
-
-    await waitFor(() => expect(screen.getByText('Apple Inc. (AAPL)')).toBeInTheDocument());
-    expect(mockIdeasApi.getRandomIdea).toHaveBeenCalledTimes(1);
-  });
-
-  it('navigates to a separate reveal page after locking in a choice', async () => {
-    const user = userEvent.setup();
-
     mockIdeasApi.getIdeaPerformance.mockResolvedValue({
       nextDayOpen: 1,
       nextDayClose: 1.1,
@@ -77,6 +58,25 @@ describe('Game flow', () => {
       threeYearPerf: 1.8,
       fiveYearPerf: 2,
     });
+  });
+
+  it('only starts one initial thesis load in StrictMode', async () => {
+    render(
+      <React.StrictMode>
+        <MemoryRouter>
+          <GamePage />
+        </MemoryRouter>
+      </React.StrictMode>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Apple Inc. (AAPL)')).toBeInTheDocument());
+    expect(screen.getByText('Forecast the return, then test yourself.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /6 months/i })).toBeInTheDocument();
+    expect(mockIdeasApi.getRandomIdea).toHaveBeenCalledTimes(1);
+  });
+
+  it('navigates to a separate reveal page after locking in a choice', async () => {
+    const user = userEvent.setup();
 
     render(
       <MemoryRouter initialEntries={['/game']}>
@@ -89,11 +89,14 @@ describe('Game flow', () => {
 
     await waitFor(() => expect(screen.getByText('Apple Inc. (AAPL)')).toBeInTheDocument());
 
-    await user.click(screen.getByRole('button', { name: /buy/i }));
-    await user.click(screen.getByRole('button', { name: 'See the outcome' }));
+    await user.click(screen.getByRole('button', { name: /5 years/i }));
+    fireEvent.change(screen.getByLabelText('Expected return slider'), { target: { value: '20' } });
+    await user.click(screen.getByRole('button', { name: 'Score my forecast' }));
 
     await waitFor(() => expect(screen.getByText('Thesis result')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('Good call.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Way off.')).toBeInTheDocument());
+    expect(screen.getByText('Market path')).toBeInTheDocument();
+    expect(screen.getByText('Each marker shows the saved return point from the thesis date through the full 5-year window.')).toBeInTheDocument();
     expect(mockIdeasApi.getIdeaById).not.toHaveBeenCalled();
   });
 
@@ -113,7 +116,7 @@ describe('Game flow', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/game/reveal/idea-1?choice=pass']}>
+      <MemoryRouter initialEntries={['/game/reveal/idea-1?horizon=1y&expected=-20']}>
         <Routes>
           <Route path="/game/reveal/:id" element={<GameRevealPage />} />
         </Routes>
@@ -121,7 +124,7 @@ describe('Game flow', () => {
     );
 
     expect(screen.getByText('Loading historical market performance...')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText('Good call.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Pretty close.')).toBeInTheDocument());
     expect(mockIdeasApi.getIdeaById).toHaveBeenCalledWith('idea-1');
   });
 });

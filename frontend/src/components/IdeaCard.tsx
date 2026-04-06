@@ -11,7 +11,7 @@ interface IdeaCardProps {
 }
 
 const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerformance }) => {
-  const { id, company_id, user_id, date, is_short, is_contest_winner } = idea;
+  const { id, company_id, user_id, date, is_contest_winner } = idea;
   const performance = initialPerformance;
 
   const { data: companies, isLoading: isCompanyLoading } = useQuery<Company[]>(
@@ -37,8 +37,7 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
   const formatPerf = (value: number | null | undefined) => {
     if (value == null) return null;
     const pct = (value - 1) * 100;
-    const adjusted = is_short ? -pct : pct;
-    const positive = adjusted > 0;
+    const positive = pct > 0;
 
     return (
       <span
@@ -51,7 +50,7 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
         }}
       >
         {positive ? '+' : ''}
-        {adjusted.toFixed(1)}%
+        {pct.toFixed(1)}%
       </span>
     );
   };
@@ -128,21 +127,6 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
           </div>
 
           <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', justifyContent: 'end' }}>
-            <span
-              style={{
-                padding: '0.36rem 0.65rem',
-                borderRadius: theme.radii.pill,
-                fontSize: '0.66rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                fontWeight: 700,
-                background: is_short ? '#fff1ef' : '#eefaf7',
-                color: is_short ? theme.colors.danger : theme.colors.success,
-                border: `1px solid ${is_short ? 'rgba(176, 86, 86, 0.22)' : 'rgba(30, 122, 97, 0.2)'}`,
-              }}
-            >
-              {is_short ? 'Short' : 'Long'}
-            </span>
             {is_contest_winner && (
               <span
                 style={{

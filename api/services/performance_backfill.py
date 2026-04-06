@@ -30,6 +30,7 @@ PERFORMANCE_TARGETS: dict[str, pd.DateOffset] = {
 }
 
 MAX_LOOKAHEAD_BUFFER = pd.Timedelta(days=14)
+YAHOO_HISTORY_TIMEOUT_SECONDS = 8
 
 
 def _latest_needed_timestamp(idea_at: datetime) -> pd.Timestamp:
@@ -182,6 +183,7 @@ def fetch_history_for_ticker(
         interval="1d",
         auto_adjust=False,
         actions=False,
+        timeout=YAHOO_HISTORY_TIMEOUT_SECONDS,
     )
     return _normalize_history_index(history)
 

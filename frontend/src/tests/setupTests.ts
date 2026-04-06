@@ -18,6 +18,14 @@ window.matchMedia = (query) => ({
   dispatchEvent: jest.fn(),
 });
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+global.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+
 // Silence React Query errors in tests
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;

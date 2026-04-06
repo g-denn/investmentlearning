@@ -8,7 +8,9 @@ import pandas as pd
 from api.services.performance_backfill import (
     backfill_performance,
     compute_performance_row,
+    fetch_history_for_ticker,
     normalize_ticker_candidates,
+    YAHOO_HISTORY_TIMEOUT_SECONDS,
 )
 from ValueInvestorsClub.ValueInvestorsClub.models.Company import Company
 from ValueInvestorsClub.ValueInvestorsClub.models.Idea import Idea
@@ -130,3 +132,32 @@ def test_backfill_performance_skips_filled_rows_by_default(db_session):
     stored = db_session.query(Performance).filter(Performance.idea_id == idea.id).one()
     assert stats.ideas_considered == 0
     assert stored.oneYearPerf == 1.0
+
+
+def test_fetch_history_for_ticker_sets_a_request_timeout(monkeypatch):
+    recorded: dict[str, object] = {}
+
+    class FakeTicker:
+        def __init__(self, ticker: str):
+            recorded["ticker"] = ticker
+
+        def history(self, **kwargs):
+            recorded.update(kwargs)
+            return make_history()
+
+    class FakeYFinance:
+        @staticmethod
+        def Ticker(ticker: str) -> FakeTicker:
+            return FakeTicker(ticker)
+
+    monkeypatch.setattr("api.services.performance_backfill.import_yfinance", lambda: FakeYFinance)
+
+    history = fetch_history_for_ticker(
+        "AAPL",
+        pd.Timestamp("2024-01-01"),
+        pd.Timestamp("2024-02-01"),
+    )
+
+    assert not history.empty
+    assert recorded["ticker"] == "AAPL"
+    assert recorded["timeout"] == YAHOO_HISTORY_TIMEOUT_SECONDS

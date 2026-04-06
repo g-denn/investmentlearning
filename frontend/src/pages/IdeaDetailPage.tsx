@@ -4,7 +4,12 @@ import PerformanceChart from '../components/PerformanceChart';
 import { useIdeaDetail, useIdeaPerformance } from '../hooks/useIdeas';
 import { pageMaxWidth, theme } from '../theme';
 
-type EmbedState = 'loading' | 'ready' | 'error';
+const splitParagraphs = (value: string | undefined): string[] =>
+  (value ?? '')
+    .replace(/^Description\s*/i, '')
+    .split(/\n\s*\n+/)
+    .map((part) => part.replace(/\s+\n/g, '\n').trim())
+    .filter(Boolean);
 
 const IdeaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,11 +18,7 @@ const IdeaDetailPage: React.FC = () => {
     data: performance,
     isLoading: isPerformanceLoading,
   } = useIdeaPerformance(id || '', { enabled: !!id });
-  const [embedState, setEmbedState] = React.useState<EmbedState>('loading');
-
-  React.useEffect(() => {
-    setEmbedState('loading');
-  }, [idea?.link]);
+  const performanceRef = React.useRef<HTMLElement | null>(null);
 
   if (isLoading) {
     return (
@@ -81,6 +82,9 @@ const IdeaDetailPage: React.FC = () => {
   });
 
   const hasExtractedWriteup = Boolean(description?.description || catalysts?.catalysts);
+  const descriptionParagraphs = splitParagraphs(description?.description);
+  const catalystParagraphs = splitParagraphs(catalysts?.catalysts);
+  const hasPerformance = Boolean(performance);
 
   return (
     <div style={{ padding: '1.5rem 1.25rem 4rem' }}>
@@ -115,21 +119,6 @@ const IdeaDetailPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: '1rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
-                <span
-                  style={{
-                    padding: '0.36rem 0.7rem',
-                    borderRadius: theme.radii.pill,
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    background: is_short ? '#fff1ef' : '#eefaf7',
-                    color: is_short ? theme.colors.danger : theme.colors.success,
-                    border: `1px solid ${is_short ? 'rgba(176, 86, 86, 0.22)' : 'rgba(30, 122, 97, 0.2)'}`,
-                  }}
-                >
-                  {is_short ? 'Short thesis' : 'Long thesis'}
-                </span>
                 {is_contest_winner && (
                   <span
                     style={{
@@ -163,9 +152,25 @@ const IdeaDetailPage: React.FC = () => {
               </h1>
             </div>
 
-            <div style={{ color: theme.colors.textSoft, lineHeight: 1.6, textAlign: 'right' }}>
+            <div style={{ color: theme.colors.textSoft, lineHeight: 1.6, textAlign: 'right', display: 'grid', gap: '0.75rem', justifyItems: 'end' }}>
               <div>Published {formattedDate}</div>
               <div>by {user?.username || user_id}</div>
+              {hasPerformance && (
+                <button
+                  type="button"
+                  onClick={() => performanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{
+                    padding: '0.8rem 1rem',
+                    borderRadius: 18,
+                    border: 'none',
+                    background: theme.colors.text,
+                    color: theme.colors.surfaceStrong,
+                    fontWeight: 700,
+                  }}
+                >
+                  View performance
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -190,54 +195,78 @@ const IdeaDetailPage: React.FC = () => {
             >
               <div style={{ padding: '1rem 1.2rem', borderBottom: `1px solid ${theme.colors.line}` }}>
                 <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.35rem' }}>
-                  Original VIC write-up
+                  Thesis
                 </div>
-                {link && (
-                  <a href={link} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.text, textDecoration: 'none', fontWeight: 700 }}>
-                    Open original page
-                  </a>
-                )}
+                <div style={{ color: theme.colors.textSoft, lineHeight: 1.6 }}>
+                  Read the extracted write-up first, then jump to the performance section below.
+                </div>
               </div>
 
-              {link ? (
-                <div style={{ position: 'relative', minHeight: 900 }}>
-                  {embedState !== 'ready' && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        display: 'grid',
-                        placeItems: 'center',
-                        textAlign: 'center',
-                        padding: '1.5rem',
-                        background: 'rgba(251, 248, 242, 0.88)',
-                        color: theme.colors.textSoft,
-                        zIndex: 1,
-                      }}
-                    >
-                      {embedState === 'error'
-                        ? 'The embedded page could not be displayed here.'
-                        : 'Loading the original VIC layout...'}
+              {hasExtractedWriteup ? (
+                <div style={{ padding: '1.25rem', display: 'grid', gap: '1.25rem' }}>
+                  {descriptionParagraphs.length > 0 && (
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                      {descriptionParagraphs.map((paragraph, index) => (
+                        <p key={`${paragraph}-${index}`} style={{ margin: 0, color: theme.colors.textSoft, lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
+                          {paragraph}
+                        </p>
+                      ))}
                     </div>
                   )}
-                  <iframe
-                    title={`Original write-up for ${company?.ticker || company_id}`}
-                    src={link}
-                    style={{ width: '100%', minHeight: 900, border: 0, background: '#fff' }}
-                    onLoad={() => setEmbedState('ready')}
-                    onError={() => setEmbedState('error')}
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
+
+                  {catalystParagraphs.length > 0 && (
+                    <div
+                      style={{
+                        padding: '1rem 1.05rem',
+                        borderRadius: 22,
+                        background: theme.colors.surfaceTint,
+                        border: `1px solid ${theme.colors.line}`,
+                      }}
+                    >
+                      <h2 style={{ margin: '0 0 0.7rem', fontFamily: theme.fonts.display, fontSize: '1.1rem', letterSpacing: '-0.04em' }}>
+                        Catalysts
+                      </h2>
+                      <div style={{ display: 'grid', gap: '0.75rem' }}>
+                        {catalystParagraphs.map((paragraph, index) => (
+                          <p key={`${paragraph}-${index}`} style={{ margin: 0, color: theme.colors.textSoft, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {link && (
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        width: 'fit-content',
+                        padding: '0.85rem 1rem',
+                        borderRadius: 18,
+                        border: `1px solid ${theme.colors.line}`,
+                        background: theme.colors.surfaceStrong,
+                        color: theme.colors.text,
+                        textDecoration: 'none',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Open original VIC page
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div style={{ padding: '1.25rem', color: theme.colors.textSoft }}>
-                  No original VIC link is available for this idea.
+                  No extracted thesis text is available for this idea.
                 </div>
               )}
             </section>
 
-            {isPerformanceLoading ? (
+            {(isPerformanceLoading || hasPerformance) && (
               <section
+                ref={performanceRef}
                 style={{
                   padding: '1.25rem',
                   borderRadius: 28,
@@ -246,27 +275,38 @@ const IdeaDetailPage: React.FC = () => {
                   boxShadow: `0 18px 36px ${theme.colors.shadow}`,
                 }}
               >
-                <h2 style={{ margin: '0 0 0.75rem', fontFamily: theme.fonts.display, fontSize: '1.45rem', letterSpacing: '-0.05em' }}>
-                  Performance
-                </h2>
-                <p style={{ margin: 0, color: theme.colors.textSoft }}>Loading live market performance...</p>
-              </section>
-            ) : performance ? (
-              <PerformanceChart performance={performance} isShort={is_short} />
-            ) : (
-              <section
-                style={{
-                  padding: '1.25rem',
-                  borderRadius: 28,
-                  background: 'rgba(255, 255, 255, 0.76)',
-                  border: `1px solid ${theme.colors.line}`,
-                  boxShadow: `0 18px 36px ${theme.colors.shadow}`,
-                }}
-              >
-                <h2 style={{ margin: '0 0 0.75rem', fontFamily: theme.fonts.display, fontSize: '1.45rem', letterSpacing: '-0.05em' }}>
-                  Performance
-                </h2>
-                <p style={{ margin: 0, color: theme.colors.textSoft }}>No performance data available.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'end', flexWrap: 'wrap', marginBottom: '0.9rem' }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontFamily: theme.fonts.display, fontSize: '1.45rem', letterSpacing: '-0.05em' }}>
+                      Performance
+                    </h2>
+                    <p style={{ margin: '0.45rem 0 0', color: theme.colors.textSoft }}>
+                      The chart below shows how the stock actually moved after publication.
+                    </p>
+                  </div>
+                  {hasPerformance && (
+                    <button
+                      type="button"
+                      onClick={() => performanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      style={{
+                        padding: '0.75rem 0.95rem',
+                        borderRadius: 16,
+                        border: `1px solid ${theme.colors.line}`,
+                        background: theme.colors.surfaceStrong,
+                        color: theme.colors.text,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Performance section
+                    </button>
+                  )}
+                </div>
+
+                {isPerformanceLoading ? (
+                  <p style={{ margin: 0, color: theme.colors.textSoft }}>Loading live market performance...</p>
+                ) : performance ? (
+                  <PerformanceChart performance={performance} isShort={is_short} />
+                ) : null}
               </section>
             )}
           </div>
@@ -284,34 +324,49 @@ const IdeaDetailPage: React.FC = () => {
               <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.65rem' }}>
                 Summary
               </div>
-              {hasExtractedWriteup ? (
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {description?.description && (
-                    <div>
-                      <h2 style={{ margin: 0, fontFamily: theme.fonts.display, fontSize: '1.15rem', letterSpacing: '-0.04em' }}>
-                        Thesis
-                      </h2>
-                      <p style={{ margin: '0.55rem 0 0', color: theme.colors.textSoft, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-                        {description.description}
-                      </p>
-                    </div>
-                  )}
-                  {catalysts?.catalysts && (
-                    <div>
-                      <h2 style={{ margin: 0, fontFamily: theme.fonts.display, fontSize: '1.15rem', letterSpacing: '-0.04em' }}>
-                        Catalysts
-                      </h2>
-                      <p style={{ margin: '0.55rem 0 0', color: theme.colors.textSoft, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-                        {catalysts.catalysts}
-                      </p>
-                    </div>
-                  )}
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: theme.fonts.display, fontSize: '1.15rem', letterSpacing: '-0.04em' }}>
+                    What you can do here
+                  </h2>
+                  <p style={{ margin: '0.55rem 0 0', color: theme.colors.textSoft, lineHeight: 1.75 }}>
+                    Read the extracted thesis on the left, then use the performance section to compare the write-up against what actually happened in the market.
+                  </p>
                 </div>
-              ) : (
-                <p style={{ margin: 0, color: theme.colors.textSoft }}>
-                  No extracted thesis text is available for this idea.
-                </p>
-              )}
+                {!isPerformanceLoading && !hasPerformance && (
+                  <div
+                    style={{
+                      padding: '0.9rem 1rem',
+                      borderRadius: 18,
+                      background: theme.colors.surfaceTint,
+                      color: theme.colors.textSoft,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Performance data is not available for this idea yet.
+                  </div>
+                )}
+                {link && (
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      width: 'fit-content',
+                      padding: '0.8rem 0.95rem',
+                      borderRadius: 16,
+                      border: `1px solid ${theme.colors.line}`,
+                      background: theme.colors.surfaceStrong,
+                      color: theme.colors.text,
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Open source page in a new tab
+                  </a>
+                )}
+              </div>
             </section>
 
             <section
@@ -338,6 +393,10 @@ const IdeaDetailPage: React.FC = () => {
                 <div>
                   <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Published</div>
                   <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>{formattedDate}</div>
+                </div>
+                <div>
+                  <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Contest winner</div>
+                  <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>{is_contest_winner ? 'Yes' : 'No'}</div>
                 </div>
               </div>
             </section>

@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ideasApi } from '../api/apiService';
+import PerformanceChart from '../components/PerformanceChart';
 import { IdeaDetail, Performance } from '../types/api';
 import { pageMaxWidth, theme } from '../theme';
 
-type Choice = 'buy' | 'pass';
-type RevealLocationState = { choice?: Choice; idea?: IdeaDetail };
+type PredictionHorizon = '6m' | '1y' | '5y';
+type HorizonAccessor = 'sixMonthPerf' | 'oneYearPerf' | 'fiveYearPerf';
+type RevealLocationState = { horizon?: PredictionHorizon; expectedReturn?: number; idea?: IdeaDetail };
+
+const HORIZON_CONFIG: Record<PredictionHorizon, { label: string; accessor: HorizonAccessor }> = {
+  '6m': { label: '6 months', accessor: 'sixMonthPerf' },
+  '1y': { label: '1 year', accessor: 'oneYearPerf' },
+  '5y': { label: '5 years', accessor: 'fiveYearPerf' },
+};
 
 const cardStyle: React.CSSProperties = {
   borderRadius: 28,
@@ -14,25 +22,29 @@ const cardStyle: React.CSSProperties = {
   boxShadow: `0 24px 50px ${theme.colors.shadow}`,
 };
 
-const ratioToPct = (v: number): number => (v - 1) * 100;
+const ratioToPct = (v: number | null | undefined): number | null =>
+  v == null ? null : (v - 1) * 100;
 
 const fmt = (v: number | null | undefined): string => {
   if (v == null) return '-';
   const pct = ratioToPct(v);
+  if (pct == null) return '-';
   return `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
 };
 
-const perfPositive = (v: number | null | undefined, isShort: boolean): boolean =>
-  v != null && (isShort ? v < 1 : v > 1);
+const perfPositive = (v: number | null | undefined): boolean => v != null && v > 1;
 
 const GameRevealPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const state = (location.state as RevealLocationState | null) ?? null;
-  const choiceFromQuery = new URLSearchParams(location.search).get('choice');
-  const choice: Choice | null =
-    state?.choice ?? (choiceFromQuery === 'buy' || choiceFromQuery === 'pass' ? choiceFromQuery : null);
+  const params = new URLSearchParams(location.search);
+  const horizonFromQuery = params.get('horizon');
+  const expectedFromQuery = params.get('expected');
+  const horizon: PredictionHorizon | null =
+    state?.horizon ?? (horizonFromQuery === '6m' || horizonFromQuery === '1y' || horizonFromQuery === '5y' ? horizonFromQuery : null);
+  const expectedReturn = state?.expectedReturn ?? (expectedFromQuery != null ? Number(expectedFromQuery) : null);
   const [idea, setIdea] = useState<IdeaDetail | null>(state?.idea && state.idea.id === id ? state.idea : null);
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,8 +54,8 @@ const GameRevealPage: React.FC = () => {
     let cancelled = false;
 
     const loadReveal = async () => {
-      if (!id || !choice) {
-        setErrorMsg('This result page is missing the thesis choice. Start a fresh round from the game page.');
+      if (!id || !horizon || expectedReturn == null || Number.isNaN(expectedReturn)) {
+        setErrorMsg('This result page is missing the forecast details. Start a fresh round from the game page.');
         setLoading(false);
         return;
       }
@@ -72,16 +84,32 @@ const GameRevealPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [choice, id, state]);
+  }, [expectedReturn, horizon, id, state]);
 
-  const referencePerf =
-    performance?.oneYearPerf ?? performance?.threeYearPerf ?? performance?.fiveYearPerf ?? null;
-  const thesisWorked =
-    idea && referencePerf != null ? (idea.is_short ? referencePerf < 1 : referencePerf > 1) : null;
-  const userWasRight =
-    thesisWorked != null && choice
-      ? (choice === 'buy' && thesisWorked) || (choice === 'pass' && !thesisWorked)
-      : null;
+  const actualRatio = horizon && performance ? performance[HORIZON_CONFIG[horizon].accessor] : null;
+  const actualReturn = ratioToPct(actualRatio);
+  const predictionGap =
+    expectedReturn != null && actualReturn != null ? Math.abs(expectedReturn - actualReturn) : null;
+  const signedGap =
+    expectedReturn != null && actualReturn != null ? expectedReturn - actualReturn : null;
+  const accuracyLabel =
+    predictionGap == null
+      ? null
+      : predictionGap <= 10
+        ? 'Very close.'
+        : predictionGap <= 25
+          ? 'Pretty close.'
+          : predictionGap <= 50
+            ? 'A wide miss.'
+            : 'Way off.';
+  const accuracyCopy =
+    predictionGap == null || signedGap == null
+      ? null
+      : signedGap > 0
+        ? `You overshot the actual result by ${predictionGap.toFixed(1)} percentage points.`
+        : signedGap < 0
+          ? `You undershot the actual result by ${predictionGap.toFixed(1)} percentage points.`
+          : 'You nailed the actual return exactly.';
   const perfRows = (performance
     ? [
         { label: '1 Month', value: performance.oneMonthPerf },
@@ -96,6 +124,7 @@ const GameRevealPage: React.FC = () => {
   const historicalDate = idea?.date
     ? new Date(idea.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : '';
+  const horizonLabel = horizon ? HORIZON_CONFIG[horizon].label : '';
 
   return (
     <div style={{ minHeight: '100vh', padding: '1.25rem 1.25rem 4rem' }}>
@@ -150,17 +179,17 @@ const GameRevealPage: React.FC = () => {
           </section>
         )}
 
-        {!loading && !errorMsg && idea && choice && (
+        {!loading && !errorMsg && idea && horizon && expectedReturn != null && (
           <div style={{ display: 'grid', gap: '1rem' }}>
             <section style={{ ...cardStyle, padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'end', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
-                    <span style={{ padding: '0.38rem 0.72rem', borderRadius: theme.radii.pill, fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', background: idea.is_short ? '#fff1ef' : '#eefaf7', color: idea.is_short ? theme.colors.danger : theme.colors.success }}>
-                      {idea.is_short ? 'Short' : 'Long'}
-                    </span>
                     <span style={{ padding: '0.38rem 0.72rem', borderRadius: theme.radii.pill, fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', background: theme.colors.surfaceTint, color: theme.colors.text }}>
-                      You chose {choice}
+                      Forecasted {expectedReturn > 0 ? '+' : ''}{expectedReturn.toFixed(0)}%
+                    </span>
+                    <span style={{ padding: '0.38rem 0.72rem', borderRadius: theme.radii.pill, fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', background: theme.colors.surfaceStrong, color: theme.colors.text }}>
+                      Window {horizonLabel}
                     </span>
                   </div>
                   <h1 style={{ margin: 0, fontFamily: theme.fonts.display, fontSize: 'clamp(2.1rem, 6vw, 4.2rem)', lineHeight: 0.95, letterSpacing: '-0.07em' }}>
@@ -182,23 +211,18 @@ const GameRevealPage: React.FC = () => {
                       <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Author</div>
                       <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>{idea.user?.username || idea.user_id}</div>
                     </div>
-                    {idea.link && (
-                      <a href={idea.link} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.text, textDecoration: 'none', fontWeight: 700 }}>
-                        Open original write-up
-                      </a>
-                    )}
                   </div>
                 </div>
               </div>
             </section>
 
-            {userWasRight != null && thesisWorked != null && (
-              <section style={{ ...cardStyle, padding: '1.5rem', background: userWasRight ? '#eefaf7' : '#fff1ef' }}>
-                <div style={{ fontFamily: theme.fonts.display, fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', color: userWasRight ? theme.colors.success : theme.colors.danger, marginBottom: '0.35rem' }}>
-                  {userWasRight ? 'Good call.' : 'Wrong call.'}
+            {accuracyLabel && actualReturn != null && (
+              <section style={{ ...cardStyle, padding: '1.5rem', background: predictionGap != null && predictionGap <= 25 ? '#eefaf7' : '#fff1ef' }}>
+                <div style={{ fontFamily: theme.fonts.display, fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', color: predictionGap != null && predictionGap <= 25 ? theme.colors.success : theme.colors.danger, marginBottom: '0.35rem' }}>
+                  {accuracyLabel}
                 </div>
                 <p style={{ margin: 0, color: theme.colors.textSoft, lineHeight: 1.65 }}>
-                  You chose to {choice}. The thesis {thesisWorked ? 'played out' : 'did not play out'} over the observed period.
+                  You forecasted {expectedReturn > 0 ? '+' : ''}{expectedReturn.toFixed(1)}% over {horizonLabel}. The actual result was {actualReturn > 0 ? '+' : ''}{actualReturn.toFixed(1)}%. {accuracyCopy}
                 </p>
               </section>
             )}
@@ -209,9 +233,9 @@ const GameRevealPage: React.FC = () => {
                   <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.65rem' }}>
                     Outcome
                   </div>
-                  <div style={{ display: 'grid', gap: '0.7rem' }}>
-                    {perfRows.length > 0 ? perfRows.map(({ label, value }) => {
-                      const good = perfPositive(value, idea.is_short);
+                    <div style={{ display: 'grid', gap: '0.7rem' }}>
+                      {perfRows.length > 0 ? perfRows.map(({ label, value }) => {
+                        const good = perfPositive(value);
                       const color = good ? theme.colors.success : theme.colors.danger;
                       const width = Math.min(Math.abs((value ?? 0) - 1) * 120, 100);
 
@@ -241,13 +265,28 @@ const GameRevealPage: React.FC = () => {
                     </div>
                     <div style={{ display: 'grid', gap: '0.8rem' }}>
                       <div>
-                        <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Your decision</div>
-                        <div style={{ marginTop: '0.2rem', fontWeight: 700, textTransform: 'capitalize' }}>{choice}</div>
+                        <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Your forecast</div>
+                        <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>
+                          {expectedReturn > 0 ? '+' : ''}{expectedReturn.toFixed(1)}% over {horizonLabel}
+                        </div>
                       </div>
                       <div>
-                        <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Thesis type</div>
-                        <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>{idea.is_short ? 'Short' : 'Long'}</div>
+                        <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Actual result</div>
+                        <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>
+                          {actualReturn == null ? 'Unavailable' : `${actualReturn > 0 ? '+' : ''}${actualReturn.toFixed(1)}%`}
+                        </div>
                       </div>
+                      <div>
+                        <div style={{ color: theme.colors.textMuted, fontSize: '0.75rem' }}>Forecast error</div>
+                        <div style={{ marginTop: '0.2rem', fontWeight: 700 }}>
+                          {predictionGap == null ? 'Unavailable' : `${predictionGap.toFixed(1)} percentage points`}
+                        </div>
+                      </div>
+                      {idea.link && (
+                        <a href={idea.link} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.text, textDecoration: 'none', fontWeight: 700 }}>
+                          Open original write-up
+                        </a>
+                      )}
                     </div>
                   </div>
 
@@ -257,6 +296,18 @@ const GameRevealPage: React.FC = () => {
                 </div>
               </div>
             </section>
+
+            {performance && (
+              <section style={{ ...cardStyle, padding: '1.5rem' }}>
+                <PerformanceChart
+                  performance={performance}
+                  isShort={idea.is_short}
+                  startDate={idea.date}
+                  title="Market path"
+                  subtitle="Each marker shows the saved return point from the thesis date through the full 5-year window."
+                />
+              </section>
+            )}
           </div>
         )}
       </div>

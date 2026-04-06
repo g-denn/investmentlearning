@@ -15,6 +15,7 @@ describe('ideasApi', () => {
 
   afterEach(() => {
     delete (global as Partial<typeof globalThis>).fetch;
+    delete (globalThis as typeof globalThis & { __VIC_API_BASE_URL__?: string }).__VIC_API_BASE_URL__;
   });
 
   test('getIdeaPerformance returns cached Supabase data', async () => {
@@ -63,6 +64,79 @@ describe('ideasApi', () => {
     fromMock.mockReturnValue({ select });
 
     const result = await ideasApi.getIdeaPerformance('idea-2');
+
+    expect(result).toBeNull();
+  });
+
+  test('getIdeaPerformance falls back to the backend refresh endpoint when cache is empty', async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: null,
+      error: null,
+    });
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const eq = jest.fn(() => ({ limit }));
+    const select = jest.fn(() => ({ eq }));
+    fromMock.mockReturnValue({ select });
+
+    (globalThis as typeof globalThis & { __VIC_API_BASE_URL__?: string }).__VIC_API_BASE_URL__ = 'http://localhost:8000';
+    (global as Partial<typeof globalThis>).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        nextDayOpen: 1,
+        nextDayClose: 1.05,
+        oneMonthPerf: 1.12,
+        oneYearPerf: 1.44,
+        timeline_labels: ['1M', '1Y'],
+        timeline_values: [1.12, 1.44],
+      }),
+    } as Response);
+
+    const result = await ideasApi.getIdeaPerformance('idea-3');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8000/ideas/idea-3/performance?refresh=true',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(result?.oneYearPerf).toBe(1.44);
+    expect(result?.timeline_labels).toEqual(['1M', '1Y']);
+  });
+
+  test('getIdeaPerformance returns null when refresh endpoint reports no data', async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: null,
+      error: null,
+    });
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const eq = jest.fn(() => ({ limit }));
+    const select = jest.fn(() => ({ eq }));
+    fromMock.mockReturnValue({ select });
+
+    (globalThis as typeof globalThis & { __VIC_API_BASE_URL__?: string }).__VIC_API_BASE_URL__ = 'http://localhost:8000';
+    (global as Partial<typeof globalThis>).fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+    } as Response);
+
+    const result = await ideasApi.getIdeaPerformance('idea-4');
+
+    expect(result).toBeNull();
+  });
+
+  test('getIdeaPerformance returns null when the backend refresh request fails', async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: null,
+      error: null,
+    });
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const eq = jest.fn(() => ({ limit }));
+    const select = jest.fn(() => ({ eq }));
+    fromMock.mockReturnValue({ select });
+
+    (globalThis as typeof globalThis & { __VIC_API_BASE_URL__?: string }).__VIC_API_BASE_URL__ = 'http://localhost:8000';
+    (global as Partial<typeof globalThis>).fetch = jest.fn().mockRejectedValue(new Error('network timeout'));
+
+    const result = await ideasApi.getIdeaPerformance('idea-5');
 
     expect(result).toBeNull();
   });

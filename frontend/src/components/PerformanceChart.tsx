@@ -17,63 +17,129 @@ import { theme } from '../theme';
 interface PerformanceChartProps {
   performance: Performance;
   isShort: boolean;
+  startDate?: string;
+  title?: string;
+  subtitle?: string;
 }
 
 type ChartView = 'bar' | 'line' | 'table';
+type TimelinePoint = {
+  name: string;
+  value: number | null;
+  milestone: string;
+  dateLabel?: string;
+  detailDate?: string;
+};
 
-const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShort }) => {
-  const [view, setView] = React.useState<ChartView>('bar');
+const milestoneRows = [
+  { key: 'oneWeekClosePerf', shortLabel: '1W', label: '1 Week', monthsToAdd: 0, daysToAdd: 7 },
+  { key: 'twoWeekClosePerf', shortLabel: '2W', label: '2 Weeks', monthsToAdd: 0, daysToAdd: 14 },
+  { key: 'oneMonthPerf', shortLabel: '1M', label: '1 Month', monthsToAdd: 1, daysToAdd: 0 },
+  { key: 'threeMonthPerf', shortLabel: '3M', label: '3 Months', monthsToAdd: 3, daysToAdd: 0 },
+  { key: 'sixMonthPerf', shortLabel: '6M', label: '6 Months', monthsToAdd: 6, daysToAdd: 0 },
+  { key: 'oneYearPerf', shortLabel: '1Y', label: '1 Year', monthsToAdd: 12, daysToAdd: 0 },
+  { key: 'twoYearPerf', shortLabel: '2Y', label: '2 Years', monthsToAdd: 24, daysToAdd: 0 },
+  { key: 'threeYearPerf', shortLabel: '3Y', label: '3 Years', monthsToAdd: 36, daysToAdd: 0 },
+  { key: 'fiveYearPerf', shortLabel: '5Y', label: '5 Years', monthsToAdd: 60, daysToAdd: 0 },
+] as const;
 
-  const toReturnPct = (ratio: number): number => {
-    const pct = (ratio - 1) * 100;
-    return isShort ? -pct : pct;
-  };
+const shortLabelMap = milestoneRows.reduce<Record<string, string>>((acc, item) => {
+  acc[item.shortLabel] = item.label;
+  return acc;
+}, {});
+
+const addPeriodToDate = (startDate: Date, monthsToAdd: number, daysToAdd: number): Date => {
+  const next = new Date(startDate);
+  if (monthsToAdd > 0) {
+    next.setMonth(next.getMonth() + monthsToAdd);
+  }
+  if (daysToAdd > 0) {
+    next.setDate(next.getDate() + daysToAdd);
+  }
+  return next;
+};
+
+const PerformanceChart: React.FC<PerformanceChartProps> = ({
+  performance,
+  startDate,
+  title = 'Performance',
+  subtitle,
+}) => {
+  const [view, setView] = React.useState<ChartView>('line');
+
+  const toReturnPct = (ratio: number): number => (ratio - 1) * 100;
 
   const formatTimeLabel = (label: string): string => {
-    const labelMap: Record<string, string> = {
-      '1W': '1 Week',
-      '2W': '2 Weeks',
-      '1M': '1 Month',
-      '3M': '3 Months',
-      '6M': '6 Months',
-      '1Y': '1 Year',
-      '2Y': '2 Years',
-      '3Y': '3 Years',
-      '5Y': '5 Years',
-    };
-
-    return labelMap[label] || label;
+    return shortLabelMap[label] || label;
   };
 
-  const data = performance.timeline_labels && performance.timeline_values
-    ? performance.timeline_labels.map((label, index) => {
+  const data = React.useMemo<TimelinePoint[]>(() => {
+    const parsedStartDate = startDate ? new Date(startDate) : null;
+    const hasValidStartDate = parsedStartDate != null && !Number.isNaN(parsedStartDate.getTime());
+
+    const basePoints = milestoneRows
+      .map((item) => ({
+        label: item.label,
+        shortLabel: item.shortLabel,
+        rawValue: performance[item.key],
+        monthsToAdd: item.monthsToAdd,
+        daysToAdd: item.daysToAdd,
+      }))
+      .filter((item) => item.rawValue != null);
+
+    if (hasValidStartDate) {
+      const start = parsedStartDate as Date;
+      const startingPoint: TimelinePoint = {
+        name: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        value: 0,
+        milestone: 'Start',
+        dateLabel: start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        detailDate: start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      };
+
+      return [
+        startingPoint,
+        ...basePoints.map((item) => {
+          const markerDate = addPeriodToDate(start, item.monthsToAdd, item.daysToAdd);
+          return {
+            name: markerDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            value: toReturnPct(item.rawValue as number),
+            milestone: item.label,
+            dateLabel: markerDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            detailDate: markerDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+          };
+        }),
+      ];
+    }
+
+    if (performance.timeline_labels && performance.timeline_values) {
+      return performance.timeline_labels.map((label, index) => {
         const rawValue = index < performance.timeline_values!.length ? performance.timeline_values![index] : null;
         return {
           name: formatTimeLabel(label),
+          milestone: formatTimeLabel(label),
           value: rawValue != null ? toReturnPct(rawValue) : null,
         };
-      })
-    : [
-        { name: '1 Week', value: performance.oneWeekClosePerf },
-        { name: '2 Weeks', value: performance.twoWeekClosePerf },
-        { name: '1 Month', value: performance.oneMonthPerf },
-        { name: '3 Months', value: performance.threeMonthPerf },
-        { name: '6 Months', value: performance.sixMonthPerf },
-        { name: '1 Year', value: performance.oneYearPerf },
-        { name: '2 Years', value: performance.twoYearPerf },
-        { name: '3 Years', value: performance.threeYearPerf },
-        { name: '5 Years', value: performance.fiveYearPerf },
-      ]
-        .filter((item) => item.value != null)
-        .map((item) => ({ name: item.name, value: toReturnPct(item.value as number) }));
+      });
+    }
 
-  const stroke = isShort ? theme.colors.danger : theme.colors.success;
+    return basePoints.map((item) => ({
+      name: item.label,
+      milestone: item.label,
+      value: toReturnPct(item.rawValue as number),
+    }));
+  }, [formatTimeLabel, performance, startDate]);
+
+  const lastValue = [...data].reverse().find((point) => point.value != null)?.value ?? 0;
+  const stroke = lastValue >= 0 ? theme.colors.success : theme.colors.danger;
+  const chartSubtitle = subtitle ?? (startDate ? 'Anchored to the thesis publish date with milestone markers through 5 years.' : '');
+  const xAxisKey = startDate ? 'dateLabel' : 'name';
 
   if (data.length === 0) {
     return (
       <div>
         <h2 style={{ margin: '0 0 0.75rem', fontFamily: theme.fonts.display, fontSize: '1.45rem', letterSpacing: '-0.05em' }}>
-          Performance
+          {title}
         </h2>
         <div
           style={{
@@ -93,7 +159,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
   return (
     <div>
       <h2 style={{ margin: '0 0 0.75rem', fontFamily: theme.fonts.display, fontSize: '1.45rem', letterSpacing: '-0.05em' }}>
-        Performance
+        {title}
       </h2>
       <div
         style={{
@@ -104,6 +170,12 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
           boxShadow: `0 18px 36px ${theme.colors.shadow}`,
         }}
       >
+        {chartSubtitle && (
+          <p style={{ margin: '0 0 1rem', color: theme.colors.textSoft, lineHeight: 1.6 }}>
+            {chartSubtitle}
+          </p>
+        )}
+
         <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           {(['bar', 'line', 'table'] as ChartView[]).map((tab) => {
             const active = tab === view;
@@ -133,10 +205,14 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
               {view === 'bar' ? (
                 <BarChart data={data} margin={{ top: 8, right: 18, left: 4, bottom: 8 }}>
                   <CartesianGrid stroke={theme.colors.line} vertical={false} />
-                  <XAxis dataKey="name" tick={{ fill: theme.colors.textSoft, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey={xAxisKey} tick={{ fill: theme.colors.textSoft, fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(value) => `${value.toFixed(0)}%`} tick={{ fill: theme.colors.textSoft, fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip
                     formatter={(value: number) => [`${value.toFixed(2)}%`, 'Return']}
+                    labelFormatter={(_, payload) => {
+                      const point = payload?.[0]?.payload as TimelinePoint | undefined;
+                      return point?.detailDate ? `${point.milestone} - ${point.detailDate}` : point?.milestone ?? '';
+                    }}
                     contentStyle={{
                       background: theme.colors.surfaceStrong,
                       border: `1px solid ${theme.colors.line}`,
@@ -150,10 +226,14 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
               ) : (
                 <LineChart data={data} margin={{ top: 8, right: 18, left: 4, bottom: 8 }}>
                   <CartesianGrid stroke={theme.colors.line} vertical={false} />
-                  <XAxis dataKey="name" tick={{ fill: theme.colors.textSoft, fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey={xAxisKey} tick={{ fill: theme.colors.textSoft, fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tickFormatter={(value) => `${value.toFixed(0)}%`} tick={{ fill: theme.colors.textSoft, fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip
                     formatter={(value: number) => [`${value.toFixed(2)}%`, 'Return']}
+                    labelFormatter={(_, payload) => {
+                      const point = payload?.[0]?.payload as TimelinePoint | undefined;
+                      return point?.detailDate ? `${point.milestone} - ${point.detailDate}` : point?.milestone ?? '';
+                    }}
                     contentStyle={{
                       background: theme.colors.surfaceStrong,
                       border: `1px solid ${theme.colors.line}`,
@@ -168,7 +248,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
                     name="Return %"
                     stroke={stroke}
                     strokeWidth={3}
-                    dot={{ stroke, strokeWidth: 2, r: 4, fill: theme.colors.surfaceStrong }}
+                    dot={{ stroke, strokeWidth: 2, r: 5, fill: theme.colors.surfaceStrong }}
                     activeDot={{ r: 7 }}
                   />
                 </LineChart>
@@ -182,7 +262,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
               const positive = value > 0;
               return (
                 <div
-                  key={item.name}
+                  key={`${item.milestone}-${item.name}`}
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'minmax(0, 1fr) auto auto',
@@ -193,7 +273,14 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ performance, isShor
                     background: theme.colors.surfaceTint,
                   }}
                 >
-                  <div style={{ color: theme.colors.textSoft }}>{item.name}</div>
+                  <div>
+                    <div style={{ color: theme.colors.textSoft }}>{item.milestone}</div>
+                    {item.detailDate && (
+                      <div style={{ color: theme.colors.textMuted, fontSize: '0.78rem', marginTop: '0.2rem' }}>
+                        {item.detailDate}
+                      </div>
+                    )}
+                  </div>
                   <div
                     style={{
                       color: positive ? theme.colors.success : theme.colors.danger,

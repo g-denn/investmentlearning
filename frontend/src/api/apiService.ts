@@ -17,6 +17,15 @@ type RuntimeConfig = typeof globalThis & {
   __VIC_API_BASE_URL__?: string;
 };
 
+const PERFORMANCE_REFRESH_TIMEOUT_MS = 12000;
+
+function getRuntimeApiBaseUrl(): string | null {
+  const runtimeConfig = globalThis as RuntimeConfig;
+  const baseUrl = runtimeConfig.__VIC_API_BASE_URL__?.trim();
+  if (baseUrl) return baseUrl.replace(/\/+$/, '');
+  return '/api';
+}
+
 /**
  * Ensure a VIC link is absolute and points to a specific idea page.
  * If the stored link is just the homepage or a relative path, fix it.
@@ -71,6 +80,36 @@ async function getCachedIdeaPerformance(id: string): Promise<Performance | null>
   if (error) throw new Error(error.message);
   if (!data) return null;
   return mapPerformance(cast<Record<string, unknown>>(data));
+}
+
+async function refreshIdeaPerformanceFromApi(id: string): Promise<Performance | null> {
+  const baseUrl = getRuntimeApiBaseUrl();
+  if (typeof fetch !== 'function') return null;
+  const url = `${baseUrl}/ideas/${encodeURIComponent(id)}/performance?refresh=true`;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller
+    ? globalThis.setTimeout(() => controller.abort(), PERFORMANCE_REFRESH_TIMEOUT_MS)
+    : null;
+
+  try {
+    const response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = cast<Record<string, unknown>>(await response.json());
+    return mapPerformance(payload);
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return null;
+    }
+    return null;
+  } finally {
+    if (timeoutId != null) {
+      globalThis.clearTimeout(timeoutId);
+    }
+  }
 }
 
 async function getRandomIdeaIdWithPerformance(): Promise<string> {
@@ -266,7 +305,9 @@ export const ideasApi = {
   },
 
   getIdeaPerformance: async (id: string): Promise<Performance | null> => {
-    return getCachedIdeaPerformance(id);
+    const cached = await getCachedIdeaPerformance(id);
+    if (cached) return cached;
+    return refreshIdeaPerformanceFromApi(id);
   },
 
   getIdeaDescription: async (id: string): Promise<string> => {
