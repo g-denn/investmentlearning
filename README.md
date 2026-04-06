@@ -1,164 +1,228 @@
-# Scraping and Analyzing the Value Investors Club
+# Investment Learning
 
-This is a project to scrape and analyze the website www.ValueInvestorsClub.com. It is a great website full of thousands of investing ideas that outperform the market on average. This repository briefly scrapes and analyzes them.
+Investment Learning is a research app built on top of scraped Value Investors Club data. It lets you browse historical ideas, read extracted theses and catalysts, inspect post-publication stock performance, and play a thesis-detective game that asks you to judge an idea before revealing what the market actually did.
 
-# Table Of Contents
-- [Scraping and Analyzing the Value Investors Club](#scraping-and-analyzing-the-value-investors-club)
-- [Table Of Contents](#table-of-contents)
-- [Results](#results)
-- [What's next?](#whats-next)
-- [Please, don't just clone and scrape!](#please-dont-just-clone-and-scrape)
-- [Running this tool](#running-this-tool)
-- [connect to the DB image with:](#connect-to-the-db-image-with)
-- [Structure:](#structure)
-  - [Scraper:](#scraper)
-  - [ProcessLinks](#processlinks)
-  - [ValueInvestorsClub](#valueinvestorsclub)
-    - [ValueInvestorsClub/ValueInvestorsClub/models](#valueinvestorsclubvalueinvestorsclubmodels)
-- [Pricing Data](#pricing-data)
-- [ValueInvestorsClub Scraper.](#valueinvestorsclub-scraper)
+This repo now has two identities:
 
-# Results
+- a historical VIC scraping and analysis project
+- a shipped web product for exploring that dataset
 
-For a full breakdown of calculated results see the top level pricing.ipynb. It adds the pricing data to the SQL db via SQLAlchemy, then does various forms of analysis on it, some of that analysis is discussed here.
+## What shipped recently
 
-To understand the data, you must understand how the ValueInvestorsClub segments their investment ideas into several trackable buckets, country of origin, short vs long, and contest winners. Where each idea represents a given tradable equity somewhere in the global market. Shorts are ideas where the thesis states the companies stock is expected to go down, and longs expect the company to go up normally on a basic of company value. Contest winners are winners of the ValueInvestorClubs weekly contest. This is decided based on the estimated merit, quality, and thoroughness of the investment pitch.
+Based on the most recent work on `main`, the product now includes:
 
-Some basic stats, I scraped a total of 13656 ideas. Of those, I found matching US companies historical pricing data for 2370. This is because the majority of the ideas pitched are international. 
+- a cleaner ideas browsing experience
+- a thesis detail page with extracted write-up and catalyst sections
+- a thesis detective game flow at `/game`
+- a reveal screen that compares your guess with the market outcome
+- live performance refresh using Yahoo Finance history
+- a frontend-hosted `/api/ideas/:id/performance` route for Vercel deployments
 
-We can see the annualized median returns of all groups of investment ideas below.
+## Product surfaces
 
-![Returns over various time periods for shorts, longs and contest winners](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/AllReturns.png?raw=true)
+### Web app
 
-If we look at the median returns for all time frames and broken out across all groups of ideas, we see that the long contest winners aggressively are piled onto so much that the share price moves a disproportionate amount within the first weeks and month of an idea being posted. This seems to suggest that the ValueInvestorsClub moves the market. Also, since a contest winner is announced every week, there may be disproportionate alpha in investing in contest winners the second they are announced completely naively, and then selling one to two weeks or months later.
+The frontend is a React + Vite app with these main routes:
 
-Many of the associated tickers stop being actively traded on account of going private, going bankrupt, getting acquired or some other reason for being de-listed.
+- `/`
+  - homepage
+- `/ideas`
+  - browse and filter ideas
+- `/ideas/:id`
+  - thesis detail view with extracted write-up and performance section
+- `/game`
+  - thesis detective gameplay flow
+- `/game/reveal/:id`
+  - reveal screen after a guess
+- `/about`
+  - project/about page
 
-We can see the percentage of companies that become de-listed x days after an idea is posted in this plot:
+### API
 
-![Percentage of companies that are de-listed, x days after an idea is posted.](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/PercentNone.png?raw=true)
+The FastAPI app exposes read-only routes for:
 
-It is interesting to see long positions get de-listed significantly more often than shorts. Presumably, this is because the long companies are attractive companies to acquire and the acquisition rate + going private rate is substantially higher than the number of companies going bankrupt. Therefore, these attractive companies get bought up and disappear at a higher rate than the companies which are recommended to be shorted by value investor club investors.
+- health
+- ideas
+- companies
+- users
 
-There are extreme outliers that skew various average returns, but generally, medians seem representative of the various distributions fairly well.
+It also supports performance refresh logic backed by Yahoo Finance in the Python service layer.
 
- Below are a few examples:
+## Tech stack
 
-![Five year performance distribution, non-annualized](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/FiveYearLongPerf.png?raw=true)
+### Frontend
 
-The above is the non-annualized total 5 year change in stock price for all of the companies that have data for them. Note the few outliers far out on the right tail.
+- React 18
+- TypeScript
+- Vite
+- React Router
+- React Query
+- Recharts
+- Supabase JS client
+- Vercel deployment
 
-![Five year short performance graph](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/FiveYearShortPerf.png?raw=true)
+### Backend
 
-The above is the non-annualized percentage change in stock price for short positions. This is not profit! As short positions want values less than one. We'll look at percentage gain later. We know a decent number of these companies would have gone under and have been de-listed so this number will be artificially high. You also can see a stock really hurt our average that had 2500% gains. 
+- FastAPI
+- Python
+- SQLAlchemy
+- Postgres / Supabase Postgres
+- Yahoo Finance history fetch for live performance refresh
 
-![Six Month Long Contest Winner Performance](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/SixMonthLongContestPerf.png?raw=true)
+### Data pipeline
 
-The above is the non-annualized 6 month change in price of contest winners. You can see heavy impact of outliers and the fact that we have very sparse data for contest winners.
+- Selenium and Scrapy based VIC scraping
+- Postgres data model for ideas, descriptions, catalysts, companies, users, and performance
+- notebook-based historical analysis in `pricing.ipynb`
 
-![Returns over various time periods for shorts, longs and contest winners](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/SixMonthShortContestPerf.png?raw=true)
+## Repo layout
 
-Similarly, we can see the non-annualized change in price of shorts over the same time period. This is one of the few places where shorts successfully get a negative change in share price.
+```text
+api/                 FastAPI app and performance refresh logic
+frontend/            React/Vite web app and Vercel serverless routes
+ValueInvestorsClub/  Scrapy project and SQLAlchemy models
+pics/                analysis charts and images
+pricing.ipynb        historical research notebook
+scraper.py           link discovery scraper
+ProcessLinks.py      dedupe and link processing
+```
 
-We can see the stark difference in performance when comparing the median performance of all long ideas compared to the median performance of all short ideas across various time intervals from when the idea was originally posted.
+## Local development
 
-![Returns over various time periods for shorts, longs and contest winners](https://github.com/dschonholtz/ValueInvestorsClub/blob/main/pics/ShortAndLongReturns.png?raw=true)
+### 1. Python environment
 
-The biggest takeaways from this data are the shorts only win when using the best ideas, contest winners, and even then they only return alpha for the first six months. It also suggests that the ValueInvestorsClub is moving the market, and that the best gains may be found investing quickly for very short periods of time rather than investing for long periods of time.
+Create and activate a virtual environment, then install backend dependencies:
 
-Specifically! It may be possible to get a 30% annualized return by simply buying all long ideas the second they are published and then selling a single week later.
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
 
-This of course would need to be checked more thoroughly and isn't financial advice :)
-None of this is backtested and there are more interesting things to find! But it is a solid start for a weeks worth of work.
+For development and testing:
 
+```bash
+uv pip install -r requirements-dev.txt
+```
 
-# What's next?
-- You should hire me! I love doing this kinda stuff and am looking to do more of it in a more formal workflow.
-- I have access to quantopedia and have been chatting with Systemic Alpha here at Northeastern with the goal of properly backtesting some of this data to see how off my numbers are.
-- Attempt to do classification of ideas as contest winners, and then to see if we could generate high returns by investing in projected contest winners.
-- Fine tune a large language model to write ideas based off of the worst 10% of ideas or the best 10% performing ideas.
-- Rank investors! There seem to be strong incentives to pump or dump on stocks. It would be interesting to see if there are investors that are intentionally writing bad analysis. It also would be interesting to see if you could follow a subset of authors and get disproportionate returns. 
-- See if the percentage annualized returns change over time. I strongly suspect that the ValueInvestorsClub is moving the market, and that appears to be supported by the high 1-2 week return in contest winners. It would be interesting to see if that happened when the site first launched in 2001 and had a smaller user base.
+### 2. Database
 
+Start Postgres locally:
 
-# Please, don't just clone and scrape!
+```bash
+docker-compose up -d
+```
 
-The ValueInvestorsClub is an amazing website. I don't want folks to scrape it more than necessary potentially causing unnecessary load to their servers. If I find this getting too much traffic I'll be taking the repo private.
+Initialize the database if needed:
 
-Please see connect to the DB image, on how to use the data.
+```bash
+./startScript.sh
+```
 
-If you have any questions please contact me @ schonholtz {dot} d {at} northeastern {dot} edu
+### 3. Frontend
 
+Install frontend dependencies:
 
-# Development Setup
+```bash
+cd frontend
+npm install
+```
 
-## Environment Setup
-1. Create a Python virtual environment:
-   ```bash
-   uv venv .venv
-   ```
+Run the app locally:
 
-2. Activate the virtual environment:
-   ```bash
-   source .venv/bin/activate
-   ```
+```bash
+npm run dev
+```
 
-3. Install dependencies:
-   ```bash
-   # For production
-   uv pip install -r requirements.txt
-   
-   # For development/testing
-   uv pip install -r requirements-dev.txt
-   ```
+By default the frontend expects:
 
-4. Start the database:
-   ```bash
-   docker-compose up -d
-   ```
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-5. Initialize the database:
-   ```bash
-   ./startScript.sh
-   ```
+If `VITE_API_BASE_URL` is not set, local Vite dev uses the `/api` proxy configured in `frontend/vite.config.ts`.
 
-## Running the Application
-- API Server: 
-  ```bash
-  python -m api.main
-  ```
-- Performance backfill from Yahoo Finance:
-  ```bash
-  python -m api.backfill_performance --limit 100
-  ```
-- Web Interface:
-  ```bash
-  cd frontend && npm run dev
-  ```
-- Tests:
-  ```bash
-  ./run_tests.sh
-  ```
+### 4. API
 
-## Running the Scraper Tools
-- Run scraper to collect links (Make sure to use the virtual environment):
-    ```bash
-    python scraper.py
-    ```
-- Process links to remove duplicates:
-    ```bash
-    python ProcessLinks.py
-    ```
-- Import data into database:
-    ```bash
-    scrapy crawl IdeaSpider
-    ```
+Run the FastAPI server:
 
-## Refreshing Performance Data
+```bash
+python -m api.main
+```
 
-The original performance enrichment lived in `pricing.ipynb` and used downloaded Stooq files plus ticker-name matching. That was useful for analysis, but it is not a great operational pipeline.
+Default local URL:
 
-There is now a scriptable backfill path that reuses the existing `performance` table and pulls daily history from Yahoo Finance:
+- API: `http://localhost:8000`
+
+### 5. Tests
+
+Frontend tests:
+
+```bash
+cd frontend
+npm test
+```
+
+Full project test runner:
+
+```bash
+./run_tests.sh
+```
+
+## Environment variables
+
+### Frontend
+
+Typical frontend env vars:
+
+```bash
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+VITE_API_BASE_URL=...
+```
+
+Notes:
+
+- local dev can omit `VITE_API_BASE_URL` because Vite proxies `/api`
+- deployed frontend needs the Supabase values available to the app and serverless route
+
+### Backend
+
+Typical backend env vars:
+
+```bash
+DATABASE_URL=...
+CORS_ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+## Live performance refresh
+
+There are two performance paths in this repo:
+
+### Cached performance
+
+The app can read existing rows from the `performance` table.
+
+### Live Yahoo Finance refresh
+
+Recent work added a live refresh path that:
+
+- loads the idea snapshot
+- resolves likely Yahoo ticker variants
+- requests Yahoo chart history
+- computes milestone returns from the first trading day after publication
+- returns a frontend-ready payload with timeline labels and values
+
+On the frontend deployment path, this is served by:
+
+- `frontend/api/ideas/[id]/performance.ts`
+
+On the Python side, related logic lives in:
+
+- `api/services/performance_backfill.py`
+
+## Backfilling performance data
+
+You can also populate or refresh stored performance rows directly:
 
 ```bash
 python -m api.backfill_performance --limit 100
@@ -167,138 +231,83 @@ python -m api.backfill_performance --idea-id <uuid> --dry-run
 ```
 
 Notes:
-- The script updates the existing `performance` columns your API and frontend already read.
-- It defaults to filling only missing rows. Use `--force` to refresh existing values.
-- It uses `DATABASE_URL`, so you can point it at local Postgres or a Supabase Postgres connection string.
-- Ticker resolution is still only as good as the ticker stored in `ideas.company_id`. If international symbols need exchange suffixes, those will still need better symbol normalization later.
 
-# connect to the DB image with:
+- it updates the existing `performance` table
+- it fills missing rows by default
+- `--force` refreshes existing values
+- ticker quality still depends on what is stored in `ideas.company_id`
 
-`psql -U postgres -h localhost -p 5432`
+## Scraping workflow
 
-To get running with this data, I have dumped the data with the command
+This repo still includes the original scraping pipeline.
 
-`pg_dump -U postgres -h localhost -p 5432 ideas > VIC_IDEAS.sql`
+### Link collection
 
-Password is just `postgres`
+Use Selenium to collect idea links:
 
-Then you can run `docker-compose up` at the root level of this repo, then connect to the db with:
+```bash
+python scraper.py
+```
 
-`psql -U postgres -h localhost -p 5432`
+### Link dedupe
 
-To load the data into your version of postgres after you have gotten postgres running locally, find the data here:
+Process and deduplicate the saved link files:
 
-https://drive.google.com/file/d/1XdHbJu35eyJdMoHMyycudDjyCvrEmIBW/view?usp=sharing
+```bash
+python ProcessLinks.py
+```
 
-Then you can load it into your running psql instance with:
+### Full import
 
-psql -U postgres -h localhost -p 5432 ideas < VIC_IDEAS.sql
+Run the Scrapy spider:
 
-I have tested this flow on ubuntu 22.04, but presumably this dump should work any version of postgres and docker.
+```bash
+scrapy crawl IdeaSpider
+```
 
+## Research and analysis
 
-# Structure:
+The original analysis work is still here. The main notebook is:
 
-## Scraper:
+- `pricing.ipynb`
 
-This is a simple python file that leverages Selenium. 
-It loads the ValueInvestorsClub.com website, selects a starting date, then it clicks the load more button for a pre-determined amount of time. 
-After some number of load more clicks, currently 20, it loads all of the links to investment ideas and saves them to a file starting with the given date it started scraping from.
+The charts in `pics/` show:
 
-Because the number of ideas on the page eventually becomes very large, it becomes vastly more efficient to save periodically, and to select a new date with only 20 ideas on the page.
+- long vs short performance
+- contest-winner behavior
+- delisting rates over time
+- return distributions across time horizons
 
-It would definitely be possible to have selenium reload the page with a new date every x number of clicks, but currently I just run the script again. 
+## Database notes
 
-This generates some repeats, and forces me to watch the script a bit more closely, but since I didn't know what the failure modes were for this site and I can remove duplicates in post, it seemed to make more sense to watch it closely and to watch for failure.
+Core tables include:
 
-It is worth noting that in order to get IP banned, the IP is rotated with a VPN CLI, and there are fairly long random sleeps between certain numbers of requests.
+- `ideas`
+- `descriptions`
+- `catalyst`
+- `companies`
+- `users`
+- `performance`
 
-After running this we get a collection of link text files.
+The large text fields for descriptions and catalysts are broken out from the core ideas table to keep list queries lighter.
 
-## ProcessLinks
+## Deployment notes
 
-This is a really simple python file that processes all of the link files, removes duplicates and makes a single link file.
+The frontend is configured for Vercel.
 
-## ValueInvestorsClub
+Important details:
 
-This is a scrapy project that the scrapy package auto-builds. 
-I have since discovered that the scrapy project does in fact support selenium, but by using selenium just to scrape the links I could run a scrapy request platform headlessly. I did have to continue to rotate IPs and now user agents in order to not get blocked, but ultimately I was still able to scrape all of the associated data.
+- Vercel must preserve filesystem routes before falling back to the SPA shell
+- the frontend-hosted performance route depends on Supabase config being available
+- local Vite proxy behavior is not the same as deployed behavior, so `/api` issues can hide until deploy time
 
-Because of the way I initially ran this I still ended up with some duplicate data entries in my postgreSQL DB.
+## Why this project exists
 
-I removed those duplicates with a simple SQL query, checking for users who had multiple ideas with the same ticker and same date.
+Value Investors Club is full of strong historical write-ups. This project turns that archive into something interactive:
 
-### ValueInvestorsClub/ValueInvestorsClub/models
+- browse ideas quickly
+- read the thesis in a cleaner format
+- compare narrative vs. market outcome
+- practice judgment through the game flow
 
-For ease of imports for right now, I have nested the models for SQL Alchemy in the scrapy project. I may have to break that out into a separate Python project/package eventually.
-
-The ideas table is mapped as:
-
-    id: Mapped[str] = mapped_column(primary_key=True)
-    link: Mapped[str] = mapped_column(String(256))
-    company_id: Mapped[int] = mapped_column(ForeignKey("companies.ticker"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_link"))
-    date: Mapped[DateTime] = mapped_column(DateTime)
-    is_short : Mapped[bool] = mapped_column(Boolean)
-    is_contest_winner : Mapped[bool] = mapped_column(Boolean)
-
-Note: The descriptions and catalysts table are effectively part of the ideas table, but they are broken out as their values are huge and would greatly impact performance when querying at scale.
-
-The descriptions table is mapped as:
-    idea_id: Mapped[str] = mapped_column(ForeignKey(Idea.id), primary_key=True)
-    description: Mapped[str] = mapped_column(String(128000))
-
-The catalysts table is mapped as:
-    idea_id: Mapped[str] = mapped_column(ForeignKey(Idea.id), primary_key=True)
-    catalysts: Mapped[str] = mapped_column(String(4096))
-
-The companies table is mapped as:
-    ticker: Mapped[str] = mapped_column(String(32), primary_key=True)
-    company_name: Mapped[str] = mapped_column(String(128))
-
-The performance table is the only table I don't really like.
-I didn't want to bring in all of the assiocated data of the 135,000 tickers that exist daily stock data or 
-    idea_id: Mapped[str] = mapped_column(ForeignKey("ideas.id"), primary_key=True)
-    sameDayClose: Mapped[float] = mapped_column(Float)
-    nextDayOpen: Mapped[float] = mapped_column(Float)
-    nextDayClose: Mapped[float] = mapped_column(Float)
-    oneWeekClose: Mapped[float] = mapped_column(Float)
-    twoWeekClose: Mapped[float] = mapped_column(Float)
-    one_month_performance: Mapped[float] = mapped_column(Float)
-    three_month_performance: Mapped[float] = mapped_column(Float)
-    six_month_performance: Mapped[float] = mapped_column(Float)
-    one_year_performance: Mapped[float] = mapped_column(Float)
-    two_year_performance: Mapped[float] = mapped_column(Float)
-    three_year_performance: Mapped[float] = mapped_column(Float)
-    five_year_performance: Mapped[float] = mapped_column(Float)
-
-The user table is a mapping of usernames and links to them. Note it is linked to the user_link in the ideas table:
-    username: Mapped[str] = mapped_column(String(64))
-    user_link: Mapped[str] = mapped_column(String(128), primary_key=True)
-
-# Pricing Data
-I downloaded a variety of free daily historical data prices from this site:
-https://stooq.com/db/h/
-
-It's great, but I have a problem with resolving exchanges. I didn't capture country of origin data when scraping initially. Huge mistake!
-
-So I had a ticker and a name in my DB, and I had pricing data which had tickers, prices and exchanges.
-
-I can fix this in a couple more days of scraping and updated my DB, but I would rather get done what I can even if it isn't perfect so I don't discover other things like this while sinking more work into a dataset.
-
-I pulled some additional CSV's from here. They have a good mapping of US companies to their associated tickers.
-https://datahub.io/core/nyse-other-listings
-
-I pushed that into numpy and lowercased all of the company names and tickers.
-
-Then I went through each idea, found 
-Then I checked that at least one of the words 3 or more characters in length is in a company name in the csv and the database. I also checked that the word isn't in a list of extremely common words.
-
-If all of that checks out, then I'll look up each price for each of the days relative to the post day and add the performance metrics.
-
-After that, I can rank investors by US stock performance prediction over various time frames.
-# ValueInvestorsClub Scraper.
-
-Data is at the top level. See nested ValueInvestorsClub dir for scrapy dir. Uses SQL Alchemy to save scrapy outputs to sql output.
-
-See top level scraping python for scrapin gof links
+That is the whole game. Turn a dense archive into a usable product.
