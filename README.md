@@ -87,6 +87,15 @@ scraper.py           link discovery scraper
 ProcessLinks.py      dedupe and link processing
 ```
 
+## Related docs
+
+- `CLAUDE.md`
+  - maintainer and contributor workflow notes for this codebase
+- `api/tests/README.md`
+  - backend integration test notes and test entry points
+- `SchemaDescription.md`
+  - schema reference for the historical project database
+
 ## Local development
 
 ### 1. Python environment

@@ -10,10 +10,18 @@ To run all tests:
 pytest -xvs api/tests/
 ```
 
+Docker-first workflow:
+
+```bash
+./run_tests_docker.sh --backend-only
+```
+
 To run a specific test file:
 
 ```bash
 pytest -xvs api/tests/test_ideas_api.py
+pytest -xvs api/tests/test_performance_backfill.py
+pytest -xvs api/tests/test_schemas.py
 ```
 
 To run a specific test:
@@ -53,8 +61,8 @@ Before running tests, you need to create a test database:
 # Create test database
 createdb -U postgres ideas_test
 
-# Run migrations on test database
-# Add your migration commands here
+# Seed or initialize schema using the project setup scripts as needed
+./startScript.sh
 ```
 
 ## Adding New Tests

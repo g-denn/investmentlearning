@@ -1,6 +1,6 @@
 # CLAUDE.md - Guide for ValueInvestorsClub Codebase
 
-## IMPORTANT: ALWAYS USE DOCKER
+## IMPORTANT: PREFER DOCKER FOR PYTHON WORK
 - **NEVER directly execute Python code or activate virtual environments outside Docker**
 - All Python code, commands, and tests MUST be run through Docker
 - Running Python directly may cause environment conflicts and execution problems
@@ -10,7 +10,7 @@
 - **Start all services**: `docker-compose up -d`
 - **Run tests in Docker**: `./run_tests_docker.sh` (required method)
 - **Service URLs**:
-  - Frontend: http://localhost:3000
+  - Frontend: http://localhost:5173
   - API: http://localhost:8000
   - Database: localhost:5432
 
@@ -46,11 +46,18 @@
 ## Project Commands
 - **Database**: `./startScript.sh` (setup/populate), `./describeSchema.sh` (view schema)
 - **API**: `docker-compose up -d api` or `python -m api.main` (local)
-- **Frontend**: `docker-compose up -d frontend` or `cd frontend && npm start` (local)
+- **Frontend**: `docker-compose up -d frontend` or `cd frontend && npm run dev` (local)
+- **Frontend tests**: `cd frontend && npm test`
+- **Frontend build**: `cd frontend && npm run build`
 - **Scraping**: Use Docker or run with proper environment:
   - `python scraper.py` (collect links)
   - `python ProcessLinks.py` (process links)
   - `scrapy crawl IdeaSpider` (scrape detailed data)
+
+## Product Notes
+- The shipped frontend is a React + Vite app deployed to Vercel.
+- Live thesis performance refresh is available through `frontend/api/ideas/[id]/performance.ts`.
+- The repo now includes an archived PostgreSQL dump at `VIC_IDEAS.zip`.
 
 ## Code Style Essentials
 - **Python**: Use type hints, snake_case, f-strings, proper error handling
