@@ -291,6 +291,16 @@ Core tables include:
 
 The large text fields for descriptions and catalysts are broken out from the core ideas table to keep list queries lighter.
 
+## Database dump
+
+This repo includes an archived PostgreSQL dump at `VIC_IDEAS.zip`.
+
+Inside that archive is the `VIC_IDEAS.sql` dump.
+
+The database originally comes from the Value Investors Club archive collected through this repo's scraping pipeline and then shaped into the app dataset used by the research notebook and web product.
+
+You can unzip it and restore it locally with standard Postgres tooling such as `psql` into a target database of your choice.
+
 ## Deployment notes
 
 The frontend is configured for Vercel.
