@@ -54,7 +54,37 @@ const splitParagraphs = (value: string | undefined): string[] =>
     .replace(/^Description\s*/i, '')
     .split(/\n\s*\n+/)
     .map((part) => part.replace(/\s+\n/g, '\n').trim())
-    .filter(Boolean);
+  .filter(Boolean);
+
+const MOBILE_STYLES = `
+  @media (max-width: 760px) {
+    .game-shell,
+    .game-decision-card,
+    .game-decision-panel {
+      padding: 1.2rem !important;
+      border-radius: 24px !important;
+    }
+
+    .game-header-actions {
+      width: 100%;
+    }
+
+    .game-header-actions > * {
+      flex: 1 1 0;
+      text-align: center;
+    }
+
+    .game-timer-card {
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+    }
+
+    .game-meta-chip {
+      min-width: 0 !important;
+      flex: 1 1 100%;
+    }
+  }
+`;
 
 const looksLikeQuote = (paragraph: string): boolean =>
   paragraph.length <= 180 && (paragraph.includes('"') || paragraph.startsWith('--') || paragraph.startsWith('-'));
@@ -179,8 +209,10 @@ const GamePage: React.FC = () => {
         color: gamePalette.text,
       }}
     >
+      <style>{MOBILE_STYLES}</style>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <header
+          className="game-shell"
           style={{
             ...cardStyle,
             marginBottom: '1rem',
@@ -201,7 +233,7 @@ const GamePage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
+          <div className="game-header-actions" style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
             <RouterLink to="/" style={{ padding: '0.7rem 0.95rem', borderRadius: 16, border: `1px solid ${gamePalette.line}`, background: gamePalette.surfaceStrong, color: gamePalette.text, textDecoration: 'none', fontWeight: 600 }}>
               Home
             </RouterLink>
@@ -272,6 +304,7 @@ const GamePage: React.FC = () => {
             `}</style>
 
             <div
+              className="game-shell"
               style={{
                 padding: '1.4rem',
                 borderRadius: 30,
@@ -298,6 +331,7 @@ const GamePage: React.FC = () => {
                 </div>
 
                 <div
+                  className="game-timer-card"
                   style={{
                     minWidth: 260,
                     flex: '0 0 320px',
@@ -318,16 +352,16 @@ const GamePage: React.FC = () => {
               </div>
 
               <div className="game-meta-strip" style={{ marginTop: '1.25rem' }}>
-                <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 180 }}>
+                <div className="game-meta-chip" style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 180 }}>
                   <div style={{ color: gamePalette.textMuted, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Published</div>
                   <div style={{ marginTop: '0.25rem', fontWeight: 700, color: gamePalette.text }}>{historicalDate}</div>
                 </div>
-                <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 180 }}>
+                <div className="game-meta-chip" style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 180 }}>
                   <div style={{ color: gamePalette.textMuted, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Author</div>
                   <div style={{ marginTop: '0.25rem', fontWeight: 700, color: gamePalette.text }}>{idea.user?.username || idea.user_id}</div>
                 </div>
                 {horizonSummary && (
-                  <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 220 }}>
+                  <div className="game-meta-chip" style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 220 }}>
                     <div style={{ color: gamePalette.textMuted, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Available windows</div>
                     <div style={{ marginTop: '0.25rem', fontWeight: 700, color: gamePalette.text }}>{horizonSummary}</div>
                   </div>
@@ -355,6 +389,7 @@ const GamePage: React.FC = () => {
 
             <div className="game-decision-grid">
               <article
+                className="game-decision-card"
                 style={{
                   padding: '1.4rem',
                   borderRadius: 30,
@@ -433,6 +468,7 @@ const GamePage: React.FC = () => {
 
               <aside style={{ display: 'grid', gap: '1rem' }}>
                 <div
+                  className="game-decision-panel"
                   style={{
                     padding: '1.2rem',
                     borderRadius: 30,

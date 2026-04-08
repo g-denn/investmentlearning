@@ -37,6 +37,36 @@ const controlStyle: React.CSSProperties = {
   outline: 'none',
 };
 
+const MOBILE_STYLES = `
+  @media (max-width: 760px) {
+    .ideas-hero {
+      padding: 1.25rem !important;
+      border-radius: 26px !important;
+    }
+
+    .ideas-hero-top,
+    .ideas-filter-bar {
+      gap: 0.85rem !important;
+    }
+
+    .ideas-quick-filters {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem !important;
+    }
+
+    .ideas-quick-filters > * {
+      width: 100%;
+    }
+
+    .ideas-search-row,
+    .ideas-advanced-grid,
+    .ideas-card-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+  }
+`;
+
 const IdeasPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -189,8 +219,10 @@ const IdeasPage: React.FC = () => {
 
   return (
     <div style={{ padding: '1.25rem 1.25rem 4rem' }}>
+      <style>{MOBILE_STYLES}</style>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <section
+          className="ideas-hero"
           style={{
             padding: '2rem',
             borderRadius: 34,
@@ -200,7 +232,7 @@ const IdeasPage: React.FC = () => {
           }}
         >
           <div style={{ display: 'grid', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'end' }}>
+            <div className="ideas-hero-top" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'end' }}>
               <div>
                 <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.16em', fontSize: '0.72rem', marginBottom: '0.7rem' }}>
                   Research archive
@@ -216,7 +248,7 @@ const IdeasPage: React.FC = () => {
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <div className="ideas-quick-filters" style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
               {QUICK_FILTERS.map((qf) => {
                 const active = activeQuickFilter === qf.id;
                 return (
@@ -238,7 +270,7 @@ const IdeasPage: React.FC = () => {
               })}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: '0.8rem' }}>
+            <div className="ideas-search-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: '0.8rem' }}>
               <input
                 type="text"
                 placeholder={searchQuery ? '' : `Search for ${typedWord || 'Apple'}`}
@@ -266,7 +298,7 @@ const IdeasPage: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="ideas-filter-bar" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setShowAdvanced((current) => !current)}
                 style={{
@@ -315,6 +347,7 @@ const IdeasPage: React.FC = () => {
 
             {showAdvanced && (
               <div
+                className="ideas-advanced-grid"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -489,6 +522,7 @@ const IdeasPage: React.FC = () => {
           ) : allIdeas.length > 0 ? (
             <>
               <div
+                className="ideas-card-grid"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',

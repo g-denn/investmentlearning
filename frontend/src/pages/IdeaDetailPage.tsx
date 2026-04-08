@@ -11,6 +11,32 @@ const splitParagraphs = (value: string | undefined): string[] =>
     .map((part) => part.replace(/\s+\n/g, '\n').trim())
     .filter(Boolean);
 
+const MOBILE_STYLES = `
+  @media (max-width: 760px) {
+    .idea-detail-hero,
+    .idea-detail-section,
+    .idea-detail-aside {
+      padding: 1.2rem !important;
+      border-radius: 24px !important;
+    }
+
+    .idea-detail-hero-top,
+    .idea-detail-performance-head {
+      gap: 0.85rem !important;
+    }
+
+    .idea-detail-meta {
+      width: 100%;
+      text-align: left !important;
+      justify-items: start !important;
+    }
+
+    .idea-detail-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+  }
+`;
+
 const IdeaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { data: idea, isLoading, isError, error } = useIdeaDetail(id || '');
@@ -88,6 +114,7 @@ const IdeaDetailPage: React.FC = () => {
 
   return (
     <div style={{ padding: '1.5rem 1.25rem 4rem' }}>
+      <style>{MOBILE_STYLES}</style>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <RouterLink
           to="/ideas"
@@ -108,6 +135,7 @@ const IdeaDetailPage: React.FC = () => {
         </RouterLink>
 
         <section
+          className="idea-detail-hero"
           style={{
             padding: '2rem',
             borderRadius: 34,
@@ -116,7 +144,7 @@ const IdeaDetailPage: React.FC = () => {
             boxShadow: `0 24px 50px ${theme.colors.shadow}`,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className="idea-detail-hero-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: '1rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
                 {is_contest_winner && (
@@ -152,7 +180,7 @@ const IdeaDetailPage: React.FC = () => {
               </h1>
             </div>
 
-            <div style={{ color: theme.colors.textSoft, lineHeight: 1.6, textAlign: 'right', display: 'grid', gap: '0.75rem', justifyItems: 'end' }}>
+            <div className="idea-detail-meta" style={{ color: theme.colors.textSoft, lineHeight: 1.6, textAlign: 'right', display: 'grid', gap: '0.75rem', justifyItems: 'end' }}>
               <div>Published {formattedDate}</div>
               <div>by {user?.username || user_id}</div>
               {hasPerformance && (
@@ -176,6 +204,7 @@ const IdeaDetailPage: React.FC = () => {
         </section>
 
         <div
+          className="idea-detail-grid"
           style={{
             marginTop: '1.25rem',
             display: 'grid',
@@ -185,6 +214,7 @@ const IdeaDetailPage: React.FC = () => {
         >
           <div style={{ display: 'grid', gap: '1rem' }}>
             <section
+              className="idea-detail-section"
               style={{
                 borderRadius: 28,
                 background: 'rgba(255, 255, 255, 0.76)',
@@ -266,6 +296,7 @@ const IdeaDetailPage: React.FC = () => {
 
             {(isPerformanceLoading || hasPerformance) && (
               <section
+                className="idea-detail-section"
                 ref={performanceRef}
                 style={{
                   padding: '1.25rem',
@@ -275,7 +306,7 @@ const IdeaDetailPage: React.FC = () => {
                   boxShadow: `0 18px 36px ${theme.colors.shadow}`,
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'end', flexWrap: 'wrap', marginBottom: '0.9rem' }}>
+                <div className="idea-detail-performance-head" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'end', flexWrap: 'wrap', marginBottom: '0.9rem' }}>
                   <div>
                     <h2 style={{ margin: 0, fontFamily: theme.fonts.display, fontSize: '1.45rem', letterSpacing: '-0.05em' }}>
                       Performance
@@ -313,6 +344,7 @@ const IdeaDetailPage: React.FC = () => {
 
           <aside style={{ display: 'grid', gap: '1rem' }}>
             <section
+              className="idea-detail-aside"
               style={{
                 padding: '1.25rem',
                 borderRadius: 28,
@@ -370,6 +402,7 @@ const IdeaDetailPage: React.FC = () => {
             </section>
 
             <section
+              className="idea-detail-aside"
               style={{
                 padding: '1.25rem',
                 borderRadius: 28,

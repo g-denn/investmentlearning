@@ -40,12 +40,36 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
+const MOBILE_STYLES = `
+  @media (max-width: 760px) {
+    .home-hero {
+      padding: 2rem 1.2rem !important;
+      border-radius: 28px !important;
+    }
+
+    .home-hero-title {
+      font-size: clamp(2.9rem, 14vw, 4.2rem) !important;
+      line-height: 0.95 !important;
+    }
+
+    .home-hero-copy {
+      font-size: 1rem !important;
+    }
+
+    .home-hero-points {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+  }
+`;
+
 const HomePage: React.FC = () => {
   return (
     <div style={{ padding: '2rem 1.25rem 5rem' }}>
+      <style>{MOBILE_STYLES}</style>
       <section style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <motion.div
           {...fadeUp(0.05)}
+          className="home-hero"
           style={{
             padding: '3.5rem clamp(1.5rem, 4vw, 3.5rem)',
             borderRadius: 40,
@@ -89,6 +113,7 @@ const HomePage: React.FC = () => {
 
             <motion.h1
               {...fadeUp(0.15)}
+              className="home-hero-title"
               style={{
                 margin: 0,
                 fontFamily: theme.fonts.display,
@@ -114,6 +139,7 @@ const HomePage: React.FC = () => {
 
             <motion.p
               {...fadeUp(0.25)}
+              className="home-hero-copy"
               style={{
                 maxWidth: 760,
                 margin: '1.5rem auto 0',
@@ -173,6 +199,7 @@ const HomePage: React.FC = () => {
 
             <motion.div
               {...fadeUp(0.45)}
+              className="home-hero-points"
               style={{
                 marginTop: '2.3rem',
                 display: 'grid',

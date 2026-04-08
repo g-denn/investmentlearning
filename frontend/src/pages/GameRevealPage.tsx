@@ -34,6 +34,43 @@ const fmt = (v: number | null | undefined): string => {
 
 const perfPositive = (v: number | null | undefined): boolean => v != null && v > 1;
 
+const MOBILE_STYLES = `
+  @media (max-width: 760px) {
+    .game-reveal-shell,
+    .game-reveal-panel {
+      padding: 1.2rem !important;
+      border-radius: 24px !important;
+    }
+
+    .game-reveal-actions {
+      width: 100%;
+    }
+
+    .game-reveal-actions > * {
+      flex: 1 1 0;
+      text-align: center;
+    }
+
+    .game-reveal-context {
+      min-width: 0 !important;
+      width: 100%;
+    }
+
+    .game-reveal-outcome {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .game-reveal-outcome-row {
+      grid-template-columns: minmax(0, 1fr) !important;
+      text-align: left !important;
+    }
+
+    .game-reveal-outcome-value {
+      text-align: left !important;
+    }
+  }
+`;
+
 const GameRevealPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,8 +165,10 @@ const GameRevealPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', padding: '1.25rem 1.25rem 4rem' }}>
+      <style>{MOBILE_STYLES}</style>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <header
+          className="game-reveal-shell"
           style={{
             ...cardStyle,
             marginBottom: '1rem',
@@ -150,7 +189,7 @@ const GameRevealPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
+          <div className="game-reveal-actions" style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
             <RouterLink to="/game" style={{ padding: '0.7rem 0.95rem', borderRadius: 16, border: `1px solid ${theme.colors.line}`, background: theme.colors.surfaceStrong, textDecoration: 'none', fontWeight: 600 }}>
               Back to game
             </RouterLink>
@@ -181,7 +220,7 @@ const GameRevealPage: React.FC = () => {
 
         {!loading && !errorMsg && idea && horizon && expectedReturn != null && (
           <div style={{ display: 'grid', gap: '1rem' }}>
-            <section style={{ ...cardStyle, padding: '2rem' }}>
+            <section className="game-reveal-shell" style={{ ...cardStyle, padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'end', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
@@ -198,7 +237,7 @@ const GameRevealPage: React.FC = () => {
                   </h1>
                 </div>
 
-                <div style={{ padding: '1rem', minWidth: 220, borderRadius: 24, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
+                <div className="game-reveal-context" style={{ padding: '1rem', minWidth: 220, borderRadius: 24, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
                   <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.7rem' }}>
                     Context
                   </div>
@@ -217,7 +256,7 @@ const GameRevealPage: React.FC = () => {
             </section>
 
             {accuracyLabel && actualReturn != null && (
-              <section style={{ ...cardStyle, padding: '1.5rem', background: predictionGap != null && predictionGap <= 25 ? '#eefaf7' : '#fff1ef' }}>
+              <section className="game-reveal-panel" style={{ ...cardStyle, padding: '1.5rem', background: predictionGap != null && predictionGap <= 25 ? '#eefaf7' : '#fff1ef' }}>
                 <div style={{ fontFamily: theme.fonts.display, fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', color: predictionGap != null && predictionGap <= 25 ? theme.colors.success : theme.colors.danger, marginBottom: '0.35rem' }}>
                   {accuracyLabel}
                 </div>
@@ -227,8 +266,8 @@ const GameRevealPage: React.FC = () => {
               </section>
             )}
 
-            <section style={{ ...cardStyle, padding: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 320px)', gap: '1rem', alignItems: 'start' }}>
+            <section className="game-reveal-panel" style={{ ...cardStyle, padding: '1.5rem' }}>
+              <div className="game-reveal-outcome" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 320px)', gap: '1rem', alignItems: 'start' }}>
                 <div>
                   <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.65rem' }}>
                     Outcome
@@ -240,12 +279,12 @@ const GameRevealPage: React.FC = () => {
                       const width = Math.min(Math.abs((value ?? 0) - 1) * 120, 100);
 
                       return (
-                        <div key={label} style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr) 80px', gap: '0.8rem', alignItems: 'center', padding: '0.9rem 1rem', borderRadius: 20, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
+                        <div className="game-reveal-outcome-row" key={label} style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr) 80px', gap: '0.8rem', alignItems: 'center', padding: '0.9rem 1rem', borderRadius: 20, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
                           <div style={{ color: theme.colors.textSoft }}>{label}</div>
                           <div style={{ height: 8, background: theme.colors.surfaceTint, borderRadius: 999, overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${width}%`, background: color, borderRadius: 999 }} />
                           </div>
-                          <div style={{ color, fontWeight: 700, textAlign: 'right', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+                          <div className="game-reveal-outcome-value" style={{ color, fontWeight: 700, textAlign: 'right', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
                             {fmt(value)}
                           </div>
                         </div>
@@ -258,7 +297,7 @@ const GameRevealPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ padding: '1rem', borderRadius: 24, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}`, display: 'grid', gap: '1rem' }}>
+                <div className="game-reveal-context" style={{ padding: '1rem', borderRadius: 24, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}`, display: 'grid', gap: '1rem' }}>
                   <div>
                     <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.7rem' }}>
                       Recap
@@ -298,7 +337,7 @@ const GameRevealPage: React.FC = () => {
             </section>
 
             {performance && (
-              <section style={{ ...cardStyle, padding: '1.5rem' }}>
+              <section className="game-reveal-panel" style={{ ...cardStyle, padding: '1.5rem' }}>
                 <PerformanceChart
                   performance={performance}
                   isShort={idea.is_short}

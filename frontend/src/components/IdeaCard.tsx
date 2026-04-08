@@ -10,6 +10,21 @@ interface IdeaCardProps {
   performance?: Performance;
 }
 
+const MOBILE_STYLES = `
+  @media (max-width: 760px) {
+    .idea-card-title {
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      line-height: 1.08 !important;
+    }
+
+    .idea-card-perf-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+`;
+
 const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerformance }) => {
   const { id, company_id, user_id, date, is_contest_winner } = idea;
   const performance = initialPerformance;
@@ -66,6 +81,7 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
 
   return (
     <RouterLink to={`/ideas/${id}`} style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
+      <style>{MOBILE_STYLES}</style>
       <div
         data-testid="idea-card"
         style={{
@@ -108,6 +124,7 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
               {formattedDate}
             </div>
             <h3
+              className="idea-card-title"
               style={{
                 margin: 0,
                 fontFamily: theme.fonts.display,
@@ -153,6 +170,7 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
 
         {perfItems.length > 0 && (
           <div
+            className="idea-card-perf-grid"
             style={{
               marginTop: 'auto',
               paddingTop: '0.95rem',

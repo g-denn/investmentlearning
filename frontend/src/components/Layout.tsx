@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom';
 import { pageMaxWidth, theme } from '../theme';
 
@@ -33,6 +33,43 @@ const GLOBAL_STYLES = `
     border-color: ${theme.colors.line};
     box-shadow: 0 10px 20px rgba(33, 24, 12, 0.06);
   }
+
+  @media (max-width: 760px) {
+    .shell-nav {
+      padding: 0.75rem 0.85rem;
+    }
+
+    .shell-nav-card {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr);
+      justify-content: stretch !important;
+      gap: 0.85rem !important;
+    }
+
+    .shell-brand {
+      min-width: 0;
+    }
+
+    .shell-brand-subtitle {
+      display: none;
+    }
+
+    .shell-nav-links {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem !important;
+      width: 100%;
+    }
+
+    .shell-nav-link {
+      text-align: center;
+      padding: 0.72rem 0.8rem;
+    }
+
+    .shell-nav-cta {
+      display: none !important;
+    }
+  }
 `;
 
 const Layout: React.FC = () => {
@@ -40,6 +77,10 @@ const Layout: React.FC = () => {
 
   const active = (href: string) =>
     href === '/' ? location.pathname === '/' : location.pathname.startsWith(href);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
 
   return (
     <div
@@ -88,6 +129,7 @@ const Layout: React.FC = () => {
       </div>
 
       <nav
+        className="shell-nav"
         style={{
           position: 'sticky',
           top: 0,
@@ -96,6 +138,7 @@ const Layout: React.FC = () => {
         }}
       >
         <div
+          className="shell-nav-card"
           style={{
             maxWidth: pageMaxWidth,
             margin: '0 auto',
@@ -113,6 +156,7 @@ const Layout: React.FC = () => {
         >
           <RouterLink
             to="/"
+            className="shell-brand"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -150,6 +194,7 @@ const Layout: React.FC = () => {
                 VIC Analytics
               </div>
               <div
+                className="shell-brand-subtitle"
                 style={{
                   color: theme.colors.textMuted,
                   fontSize: '0.76rem',
@@ -161,6 +206,7 @@ const Layout: React.FC = () => {
           </RouterLink>
 
           <div
+            className="shell-nav-links"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -182,6 +228,7 @@ const Layout: React.FC = () => {
 
           <RouterLink
             to="/ideas"
+            className="shell-nav-cta"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
