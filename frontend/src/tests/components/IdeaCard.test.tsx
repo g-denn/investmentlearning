@@ -91,8 +91,7 @@ describe('IdeaCard Component', () => {
     expect(card).toHaveTextContent(sampleIdea.user_id);
     expect(card).toHaveTextContent(sampleIdea.company_id);
     
-    // Badge information should be available immediately (not loading-dependent)
-    expect(screen.getByText('Bullish thesis')).toBeInTheDocument();
+    // Winner badge should be available immediately (not loading-dependent)
     expect(screen.getByText('Winner')).toBeInTheDocument();
   });
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom';
+import useIsMobile from '../hooks/useIsMobile';
 import { pageMaxWidth, theme } from '../theme';
 
 const NAV_ITEMS = [
@@ -37,6 +38,7 @@ const GLOBAL_STYLES = `
 
 const Layout: React.FC = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const active = (href: string) =>
     href === '/' ? location.pathname === '/' : location.pathname.startsWith(href);
@@ -50,6 +52,61 @@ const Layout: React.FC = () => {
       }}
     >
       <style>{GLOBAL_STYLES}</style>
+      <style>{`
+        @media (max-width: 820px) {
+          .shell-nav-frame {
+            padding: 0.9rem;
+            gap: 0.85rem;
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .shell-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+          }
+
+          .shell-brand {
+            flex: 1;
+            min-width: 0;
+          }
+
+          .shell-brand-meta {
+            display: none;
+          }
+
+          .shell-nav-links {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+          }
+
+          .shell-nav-link {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+          }
+
+          .shell-cta {
+            flex: 0 0 auto;
+            padding: 0.78rem 1rem;
+          }
+
+          .shell-brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+          }
+
+          .shell-brand-title {
+            font-size: 1rem;
+            line-height: 0.95;
+          }
+        }
+      `}</style>
 
       <div
         aria-hidden
@@ -92,10 +149,11 @@ const Layout: React.FC = () => {
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          padding: '1rem 1.25rem',
+          padding: isMobile ? '0.85rem 0.9rem' : '1rem 1.25rem',
         }}
       >
         <div
+          className="shell-nav-frame"
           style={{
             maxWidth: pageMaxWidth,
             margin: '0 auto',
@@ -111,56 +169,84 @@ const Layout: React.FC = () => {
             boxShadow: `0 18px 40px ${theme.colors.shadow}`,
           }}
         >
-          <RouterLink
-            to="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.7rem',
-              textDecoration: 'none',
-              minWidth: 0,
-            }}
-          >
-            <div
+          <div className="shell-top-row">
+            <RouterLink
+              to="/"
+              className="shell-brand"
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                background: theme.gradient,
-                display: 'grid',
-                placeItems: 'center',
-                color: theme.colors.surfaceStrong,
-                fontFamily: theme.fonts.display,
-                fontWeight: 800,
-                fontSize: '1rem',
-                boxShadow: `0 14px 28px ${theme.colors.shadow}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.7rem',
+                textDecoration: 'none',
+                minWidth: 0,
               }}
             >
-              V
-            </div>
-            <div>
               <div
+                className="shell-brand-mark"
                 style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 12,
+                  background: theme.gradient,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: theme.colors.surfaceStrong,
                   fontFamily: theme.fonts.display,
                   fontWeight: 800,
-                  fontSize: '1.1rem',
-                  letterSpacing: '-0.04em',
+                  fontSize: '1rem',
+                  boxShadow: `0 14px 28px ${theme.colors.shadow}`,
+                  flex: '0 0 auto',
                 }}
               >
-                VIC Analytics
+                V
               </div>
-              <div
-                style={{
-                  color: theme.colors.textMuted,
-                  fontSize: '0.76rem',
-                }}
-              >
-                Historical thesis research
+              <div style={{ minWidth: 0 }}>
+                <div
+                  className="shell-brand-title"
+                  style={{
+                    fontFamily: theme.fonts.display,
+                    fontWeight: 800,
+                    fontSize: '1.1rem',
+                    letterSpacing: '-0.04em',
+                  }}
+                >
+                  VIC Analytics
+                </div>
+                <div
+                  className="shell-brand-meta"
+                  style={{
+                    color: theme.colors.textMuted,
+                    fontSize: '0.76rem',
+                  }}
+                >
+                  Historical thesis research
+                </div>
               </div>
-            </div>
-          </RouterLink>
+            </RouterLink>
+
+            <RouterLink
+              to="/ideas"
+              className="shell-cta"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.8rem 1.15rem',
+                borderRadius: theme.radii.pill,
+                background: theme.colors.text,
+                color: theme.colors.surfaceStrong,
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Explore ideas
+            </RouterLink>
+          </div>
 
           <div
+            className="shell-nav-links"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -179,25 +265,6 @@ const Layout: React.FC = () => {
               </RouterLink>
             ))}
           </div>
-
-          <RouterLink
-            to="/ideas"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0.8rem 1.15rem',
-              borderRadius: theme.radii.pill,
-              background: theme.colors.text,
-              color: theme.colors.surfaceStrong,
-              textDecoration: 'none',
-              fontWeight: 700,
-              fontSize: '0.92rem',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Explore ideas
-          </RouterLink>
         </div>
       </nav>
 
