@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import PerformanceChart from '../components/PerformanceChart';
-import useIsMobile from '../hooks/useIsMobile';
 import { useIdeaDetail, useIdeaPerformance } from '../hooks/useIdeas';
 import { pageMaxWidth, theme } from '../theme';
 
@@ -13,7 +12,6 @@ const splitParagraphs = (value: string | undefined): string[] =>
     .filter(Boolean);
 
 const IdeaDetailPage: React.FC = () => {
-  const isMobile = useIsMobile();
   const { id } = useParams<{ id: string }>();
   const { data: idea, isLoading, isError, error } = useIdeaDetail(id || '');
   const {
@@ -89,7 +87,7 @@ const IdeaDetailPage: React.FC = () => {
   const hasPerformance = Boolean(performance);
 
   return (
-    <div style={{ padding: isMobile ? '1rem 0.9rem 3rem' : '1.5rem 1.25rem 4rem' }}>
+    <div style={{ padding: '1.5rem 1.25rem 4rem' }}>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <RouterLink
           to="/ideas"
@@ -111,7 +109,7 @@ const IdeaDetailPage: React.FC = () => {
 
         <section
           style={{
-            padding: isMobile ? '1.25rem' : '2rem',
+            padding: '2rem',
             borderRadius: 34,
             background: 'rgba(251, 248, 242, 0.8)',
             border: `1px solid ${theme.colors.line}`,
@@ -154,7 +152,7 @@ const IdeaDetailPage: React.FC = () => {
               </h1>
             </div>
 
-            <div style={{ color: theme.colors.textSoft, lineHeight: 1.6, textAlign: isMobile ? 'left' : 'right', display: 'grid', gap: '0.75rem', justifyItems: isMobile ? 'start' : 'end', width: isMobile ? '100%' : undefined }}>
+            <div style={{ color: theme.colors.textSoft, lineHeight: 1.6, textAlign: 'right', display: 'grid', gap: '0.75rem', justifyItems: 'end' }}>
               <div>Published {formattedDate}</div>
               <div>by {user?.username || user_id}</div>
               {hasPerformance && (
@@ -181,7 +179,7 @@ const IdeaDetailPage: React.FC = () => {
           style={{
             marginTop: '1.25rem',
             display: 'grid',
-            gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 1.35fr) minmax(320px, 0.9fr)',
+            gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.9fr)',
             gap: '1rem',
           }}
         >

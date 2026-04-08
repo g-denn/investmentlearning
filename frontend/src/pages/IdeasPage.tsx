@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import IdeaCard from '../components/IdeaCard';
-import useIsMobile from '../hooks/useIsMobile';
 import { useIdeas } from '../hooks/useIdeas';
 import { Idea, ListParams } from '../types/api';
 import { pageMaxWidth, theme } from '../theme';
@@ -39,7 +38,6 @@ const controlStyle: React.CSSProperties = {
 };
 
 const IdeasPage: React.FC = () => {
-  const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -190,11 +188,11 @@ const IdeasPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: isMobile ? '1rem 0.9rem 3rem' : '1.25rem 1.25rem 4rem' }}>
+    <div style={{ padding: '1.25rem 1.25rem 4rem' }}>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <section
           style={{
-            padding: isMobile ? '1.25rem' : '2rem',
+            padding: '2rem',
             borderRadius: 34,
             background: 'rgba(251, 248, 242, 0.8)',
             border: `1px solid ${theme.colors.line}`,
@@ -240,7 +238,7 @@ const IdeasPage: React.FC = () => {
               })}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) auto', gap: '0.8rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: '0.8rem' }}>
               <input
                 type="text"
                 placeholder={searchQuery ? '' : `Search for ${typedWord || 'Apple'}`}
@@ -262,7 +260,6 @@ const IdeasPage: React.FC = () => {
                   background: theme.colors.text,
                   color: theme.colors.surfaceStrong,
                   fontWeight: 700,
-                  width: isMobile ? '100%' : undefined,
                 }}
               >
                 Search
@@ -320,7 +317,7 @@ const IdeasPage: React.FC = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                   gap: '1rem',
                   padding: '1.15rem',
                   borderRadius: 24,
@@ -494,7 +491,7 @@ const IdeasPage: React.FC = () => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                   gap: '1rem',
                 }}
               >

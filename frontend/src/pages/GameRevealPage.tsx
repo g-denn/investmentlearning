@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ideasApi } from '../api/apiService';
 import PerformanceChart from '../components/PerformanceChart';
-import useIsMobile from '../hooks/useIsMobile';
 import { IdeaDetail, Performance } from '../types/api';
 import { pageMaxWidth, theme } from '../theme';
 
@@ -36,7 +35,6 @@ const fmt = (v: number | null | undefined): string => {
 const perfPositive = (v: number | null | undefined): boolean => v != null && v > 1;
 
 const GameRevealPage: React.FC = () => {
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -129,7 +127,7 @@ const GameRevealPage: React.FC = () => {
   const horizonLabel = horizon ? HORIZON_CONFIG[horizon].label : '';
 
   return (
-    <div style={{ minHeight: '100vh', padding: isMobile ? '1rem 0.9rem 3rem' : '1.25rem 1.25rem 4rem' }}>
+    <div style={{ minHeight: '100vh', padding: '1.25rem 1.25rem 4rem' }}>
       <div style={{ maxWidth: pageMaxWidth, margin: '0 auto' }}>
         <header
           style={{
@@ -200,7 +198,7 @@ const GameRevealPage: React.FC = () => {
                   </h1>
                 </div>
 
-                <div style={{ padding: '1rem', minWidth: isMobile ? 0 : 220, width: isMobile ? '100%' : undefined, borderRadius: 24, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
+                <div style={{ padding: '1rem', minWidth: 220, borderRadius: 24, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
                   <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.7rem' }}>
                     Context
                   </div>
@@ -230,7 +228,7 @@ const GameRevealPage: React.FC = () => {
             )}
 
             <section style={{ ...cardStyle, padding: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(260px, 320px)', gap: '1rem', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 320px)', gap: '1rem', alignItems: 'start' }}>
                 <div>
                   <div style={{ color: theme.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', marginBottom: '0.65rem' }}>
                     Outcome
@@ -242,12 +240,12 @@ const GameRevealPage: React.FC = () => {
                       const width = Math.min(Math.abs((value ?? 0) - 1) * 120, 100);
 
                       return (
-                        <div key={label} style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : '110px minmax(0, 1fr) 80px', gap: '0.8rem', alignItems: 'center', padding: '0.9rem 1rem', borderRadius: 20, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
+                        <div key={label} style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr) 80px', gap: '0.8rem', alignItems: 'center', padding: '0.9rem 1rem', borderRadius: 20, background: theme.colors.surfaceStrong, border: `1px solid ${theme.colors.line}` }}>
                           <div style={{ color: theme.colors.textSoft }}>{label}</div>
                           <div style={{ height: 8, background: theme.colors.surfaceTint, borderRadius: 999, overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${width}%`, background: color, borderRadius: 999 }} />
                           </div>
-                          <div style={{ color, fontWeight: 700, textAlign: isMobile ? 'left' : 'right', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+                          <div style={{ color, fontWeight: 700, textAlign: 'right', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
                             {fmt(value)}
                           </div>
                         </div>

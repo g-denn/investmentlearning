@@ -2,7 +2,6 @@ import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { companiesApi, usersApi } from '../api/apiService';
-import useIsMobile from '../hooks/useIsMobile';
 import { Company, Idea, Performance, User } from '../types/api';
 import { theme } from '../theme';
 
@@ -12,7 +11,6 @@ interface IdeaCardProps {
 }
 
 const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerformance }) => {
-  const isMobile = useIsMobile();
   const { id, company_id, user_id, date, is_contest_winner } = idea;
   const performance = initialPerformance;
 
@@ -116,9 +114,9 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
                 fontSize: '1.28rem',
                 lineHeight: 1,
                 letterSpacing: '-0.05em',
-                whiteSpace: isMobile ? 'normal' : 'nowrap',
+                whiteSpace: 'nowrap',
                 overflow: 'hidden',
-                textOverflow: isMobile ? 'clip' : 'ellipsis',
+                textOverflow: 'ellipsis',
               }}
             >
               {isCompanyLoading ? company_id : company?.company_name || company_id}
@@ -160,7 +158,7 @@ const IdeaCard: React.FC<IdeaCardProps> = ({ idea, performance: initialPerforman
               paddingTop: '0.95rem',
               borderTop: `1px solid ${theme.colors.line}`,
               display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
               gap: '0.45rem',
             }}
           >

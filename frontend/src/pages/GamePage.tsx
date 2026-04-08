@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { ideasApi } from '../api/apiService';
-import useIsMobile from '../hooks/useIsMobile';
 import { IdeaDetail, Performance } from '../types/api';
 import { pageMaxWidth, theme } from '../theme';
 
@@ -64,7 +63,6 @@ const toReturnPct = (ratio: number | null | undefined): number | null =>
   ratio == null ? null : (ratio - 1) * 100;
 
 const GamePage: React.FC = () => {
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('loading');
   const [idea, setIdea] = useState<IdeaDetail | null>(null);
@@ -176,7 +174,7 @@ const GamePage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        padding: isMobile ? '1rem 0.9rem 3rem' : '1.25rem 1.25rem 4rem',
+        padding: '1.25rem 1.25rem 4rem',
         background: `radial-gradient(circle at top left, ${gamePalette.halo}, transparent 30%), radial-gradient(circle at right top, ${gamePalette.haloSoft}, transparent 24%), ${gamePalette.pageBg}`,
         color: gamePalette.text,
       }}
@@ -301,8 +299,8 @@ const GamePage: React.FC = () => {
 
                 <div
                   style={{
-                    minWidth: isMobile ? 0 : 260,
-                    flex: isMobile ? '1 1 100%' : '0 0 320px',
+                    minWidth: 260,
+                    flex: '0 0 320px',
                     padding: '1rem 1.05rem',
                     borderRadius: 24,
                     background: gamePalette.surfaceStrong,
@@ -324,12 +322,12 @@ const GamePage: React.FC = () => {
                   <div style={{ color: gamePalette.textMuted, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Published</div>
                   <div style={{ marginTop: '0.25rem', fontWeight: 700, color: gamePalette.text }}>{historicalDate}</div>
                 </div>
-                <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: isMobile ? '100%' : 180 }}>
+                <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 180 }}>
                   <div style={{ color: gamePalette.textMuted, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Author</div>
                   <div style={{ marginTop: '0.25rem', fontWeight: 700, color: gamePalette.text }}>{idea.user?.username || idea.user_id}</div>
                 </div>
                 {horizonSummary && (
-                  <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: isMobile ? '100%' : 220 }}>
+                  <div style={{ padding: '0.9rem 1rem', borderRadius: 20, background: gamePalette.surfaceMuted, border: `1px solid ${gamePalette.line}`, minWidth: 220 }}>
                     <div style={{ color: gamePalette.textMuted, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Available windows</div>
                     <div style={{ marginTop: '0.25rem', fontWeight: 700, color: gamePalette.text }}>{horizonSummary}</div>
                   </div>

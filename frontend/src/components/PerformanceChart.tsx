@@ -11,7 +11,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import useIsMobile from '../hooks/useIsMobile';
 import { Performance } from '../types/api';
 import { theme } from '../theme';
 
@@ -66,7 +65,6 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
   title = 'Performance',
   subtitle,
 }) => {
-  const isMobile = useIsMobile();
   const [view, setView] = React.useState<ChartView>('line');
 
   const toReturnPct = (ratio: number): number => (ratio - 1) * 100;
@@ -202,7 +200,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
         </div>
 
         {view !== 'table' ? (
-          <div style={{ width: '100%', height: isMobile ? 300 : 360 }}>
+          <div style={{ width: '100%', height: 360 }}>
             <ResponsiveContainer width="100%" height="100%">
               {view === 'bar' ? (
                 <BarChart data={data} margin={{ top: 8, right: 18, left: 4, bottom: 8 }}>
@@ -267,8 +265,8 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                   key={`${item.milestone}-${item.name}`}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) auto auto',
-                    gap: isMobile ? '0.55rem' : '0.9rem',
+                    gridTemplateColumns: 'minmax(0, 1fr) auto auto',
+                    gap: '0.9rem',
                     alignItems: 'center',
                     padding: '0.95rem 1rem',
                     borderRadius: 18,
@@ -288,7 +286,6 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
                       color: positive ? theme.colors.success : theme.colors.danger,
                       fontWeight: 700,
                       fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                      textAlign: isMobile ? 'left' : 'right',
                     }}
                   >
                     {value.toFixed(2)}%
