@@ -240,16 +240,6 @@ const HomePage: React.FC = () => {
               archival investing research.
             </h2>
           </div>
-          <p
-            style={{
-              maxWidth: 380,
-              margin: 0,
-              color: theme.colors.textSoft,
-              lineHeight: 1.6,
-            }}
-          >
-            The interface should feel closer to a thoughtful research product than a flashy dashboard.
-          </p>
         </motion.div>
 
         <div
